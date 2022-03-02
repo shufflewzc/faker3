@@ -62,7 +62,7 @@ if (Fileexists) {
 }
 
 let WP_APP_TOKEN_ONE = "";
-if ($.isNode()) {
+/* if ($.isNode()) {
 	if (process.env.WP_APP_TOKEN_ONE) {		
 		WP_APP_TOKEN_ONE = process.env.WP_APP_TOKEN_ONE;
 	}
@@ -75,7 +75,7 @@ if (WP_APP_TOKEN_ONE) {
         console.log(`农场只在9点后和22点前启用一对一推送，故此次暂时取消一对一推送...`);
     }
 } else
-    console.log(`检测到未配置Wxpusher的Token，禁用一对一推送...`);
+    console.log(`检测到未配置Wxpusher的Token，禁用一对一推送...`); */
 let lnrun=0;
 let llgetshare=false;
 let NoNeedCodes = [];
