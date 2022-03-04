@@ -75,7 +75,7 @@ RemainMessage += '【其他】京喜红包只能在京喜使用,其他同理';
 let WP_APP_TOKEN_ONE = "";
 
 let TempBaipiao = "";
-
+let llgeterror=false;
 
 let doExJxBeans ="false";
 let time = new Date().getHours();
@@ -359,14 +359,19 @@ if(DisableIndex!=-1){
 			if(EnableJdMs)
 				await getMs();
 			
-			//东东农场			
-			if(EnableJdFruit){
-				await jdfruitRequest('taskInitForFarm', {
-					"version": 14,
-					"channel": 1,
-					"babelChannel": "120"
-				});
-				await getjdfruit();
+			//东东农场
+			if (EnableJdFruit) {
+			    llgeterror = false;
+			    await getjdfruit();				
+			    if (llgeterror) {
+					console.log(`东东农场API查询失败,等待10秒后再次尝试...`)
+					await $.wait(10 * 1000);					
+			        await getjdfruit();
+			    }				
+				if (llgeterror) {
+					console.log(`东东农场API查询失败,有空重启路由器换个IP吧.`)
+				}
+			    
 			}
 			//极速金币
 			if(EnableJdSpeed)
@@ -1827,10 +1832,13 @@ async function getjdfruit() {
 		$.post(option, (err, resp, data) => {
 			try {
 				if (err) {
-					console.log('\n东东农场: API查询请求失败 ‼️‼️');
-					console.log(JSON.stringify(err));
-					$.logErr(err);
+					if(!llgeterror){
+						console.log('\n东东农场: API查询请求失败 ‼️‼️');
+						console.log(JSON.stringify(err));
+					}
+					llgeterror = true;
 				} else {
+					llgeterror = false;
 					if (safeGet(data)) {
 						$.farmInfo = JSON.parse(data)
 							if ($.farmInfo.farmUserPro) {
@@ -1854,33 +1862,6 @@ async function getjdfruit() {
 				resolve();
 			}
 		})
-	})
-}
-
-function jdfruitRequest(function_id, body = {}, timeout = 1000) {
-	return new Promise(resolve => {
-		setTimeout(() => {
-			$.get(taskfruitUrl(function_id, body), (err, resp, data) => {
-				try {
-					if (err) {
-						console.log('\n东东农场: API查询请求失败 ‼️‼️')
-						console.log(JSON.stringify(err));
-						console.log(`function_id:${function_id}`)
-						$.logErr(err);
-					} else {
-						if (safeGet(data)) {
-							data = JSON.parse(data);
-							$.JDwaterEveryDayT = data.totalWaterTaskInit.totalWaterTaskTimes;
-						}
-					}
-				} catch (e) {
-					$.logErr(e, resp);
-				}
-				finally {
-					resolve(data);
-				}
-			})
-		}, timeout)
 	})
 }
 
