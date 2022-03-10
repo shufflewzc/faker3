@@ -270,4 +270,8 @@ if __name__ == '__main__':
         eid=json.loads(geteid(info[1],info[2]).split('_*')[1])['eid']
         fp=info[0]
         token=gettoken()
+<<<<<<< Updated upstream
         assist(ck,eid,fp,token,inviteinfo.split('@')[0],inviteinfo.split('@')[1])
+=======
+        assist(ck,eid,fp,token,inviteinfo.split('@')[0],inviteinfo.split('@')[1])
+>>>>>>> Stashed changes
