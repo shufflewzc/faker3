@@ -9,16 +9,21 @@
 [task_local]
 #女装盲盒
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 35 1,23 * * * https://raw.githubusercontent.com/Aaron-lv/sync/jd_scripts/jd_nzmh.js, tag=女装盲盒, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/jd.png, enabled=true
+=======
+35 1,23 * * * https://raw.githubusercontent.com/222222/sync/jd_scripts/jd_nzmh.js, tag=女装盲盒, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/jd.png, enabled=true
+>>>>>>> Stashed changes
 
 ================Loon==============
 [Script]
-cron "35 1,23 * * *" script-path=https://raw.githubusercontent.com/Aaron-lv/sync/jd_scripts/jd_nzmh.js,tag=女装盲盒
+cron "35 1,23 * * *" script-path=https://raw.githubusercontent.com/222222/sync/jd_scripts/jd_nzmh.js,tag=女装盲盒
 
 ===============Surge=================
-女装盲盒 = type=cron,cronexp="35 1,23 * * *",wake-system=1,timeout=3600,script-path=https://raw.githubusercontent.com/Aaron-lv/sync/jd_scripts/jd_nzmh.js
+女装盲盒 = type=cron,cronexp="35 1,23 * * *",wake-system=1,timeout=3600,script-path=https://raw.githubusercontent.com/222222/sync/jd_scripts/jd_nzmh.js
 
 ============小火箭=========
+<<<<<<< Updated upstream
 女装盲盒 = type=cron,script-path=https://raw.githubusercontent.com/Aaron-lv/sync/jd_scripts/jd_nzmh.js, cronexpr="35 1,23 * * *", timeout=3600, enable=true
 =======
 35 1,23 * * * https://raw.githubusercontent.com/222222/sync/jd_scripts/jd_nzmh.js, tag=女装盲盒, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/jd.png, enabled=true
@@ -31,6 +36,9 @@ cron "35 1,23 * * *" script-path=https://raw.githubusercontent.com/222222/sync/j
 女装盲盒 = type=cron,cronexp="35 1,23 * * *",wake-system=1,timeout=3600,script-path=https://raw.githubusercontent.com/222222/sync/jd_scripts/jd_nzmh.js
 
 ============小火箭=========
+女装盲盒 = type=cron,script-path=https://raw.githubusercontent.com/222222/sync/jd_scripts/jd_nzmh.js, cronexpr="35 1,23 * * *", timeout=3600, enable=true
+>>>>>>> Stashed changes
+=======
 女装盲盒 = type=cron,script-path=https://raw.githubusercontent.com/222222/sync/jd_scripts/jd_nzmh.js, cronexpr="35 1,23 * * *", timeout=3600, enable=true
 >>>>>>> Stashed changes
  */

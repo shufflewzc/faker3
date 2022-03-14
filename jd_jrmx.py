@@ -271,7 +271,11 @@ if __name__ == '__main__':
         fp=info[0]
         token=gettoken()
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         assist(ck,eid,fp,token,inviteinfo.split('@')[0],inviteinfo.split('@')[1])
+=======
+        assist(ck,eid,fp,token,inviteinfo.split('@')[0],inviteinfo.split('@')[1])
+>>>>>>> Stashed changes
 =======
         assist(ck,eid,fp,token,inviteinfo.split('@')[0],inviteinfo.split('@')[1])
 >>>>>>> Stashed changes
