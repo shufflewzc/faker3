@@ -2063,12 +2063,4 @@ function nobyda() {
 };
 }).catch(e => {
 console.error("ERRROR:",e)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 })
-=======
-})
->>>>>>> Stashed changes
-=======
-})
->>>>>>> Stashed changes
