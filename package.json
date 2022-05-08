@@ -17,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "crypto-js": "^4.0.0",
+    "dotenv": "^10.0.0",
     "download": "^6.2.5",
     "got": "^11.5.1",
     "http-server": "^0.12.3",
