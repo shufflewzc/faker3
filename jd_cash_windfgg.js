@@ -2,8 +2,8 @@
 签到领现金，每日2毛～5毛
 可互助，助力码每日不变，只变日期
 活动入口：京东APP搜索领现金进入
-更新时间：2021-06-07
-PandaToken 请前往 https://t.me/pang_da_bot  获取Token
+更新时间：2022-06-05
+WindfggToken 请前往 https://t.me/wind_fgg   获取Token
 已支持IOS双京东账号,Node.js支持N个京东账号
 脚本兼容: QuantumultX, Surge, Loon, JSBox, Node.js
 ============Quantumultx===============
@@ -21,7 +21,7 @@ cron "11 1,20 * * *" script-path=jd_cash.js,tag=签到领现金
 ============小火箭=========
 签到领现金 = type=cron,script-path=jd_cash.js, cronexpr="11 1,20 * * *", timeout=3600, enable=true
  */
-const $ = new Env('签到领现金_Panda');
+const $ = new Env('签到领现金_Windfgg版');
 const notify = $.isNode() ? require('./sendNotify') : '';
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
@@ -42,10 +42,10 @@ if ($.isNode()) {
 }
 const JD_API_HOST = 'https://api.m.jd.com/client.action';
 let allMessage = '';
-let jdPandaToken = '';
-jdPandaToken = $.isNode() ? (process.env.PandaToken ? process.env.PandaToken : `${jdPandaToken}`) : ($.getdata('PandaToken') ? $.getdata('PandaToken') : `${jdPandaToken}`);
-if (!jdPandaToken) {
-    console.log('请填写Panda获取的Token,变量是PandaToken');
+let jdWindfggToken = '';
+jdWindfggToken = $.isNode() ? (process.env.WindfggToken ? process.env.WindfggToken : `${jdWindfggToken}`) : ($.getdata('WindfggToken') ? $.getdata('WindfggToken') : `${jdWindfggToken}`);
+if (!jdWindfggToken) {
+    console.log('\n请前往 https://t.me/wind_fgg   获取Token\n请填写Windfgg获取的Token,变量是WindfggToken');
 	return;
 }
 
@@ -123,7 +123,7 @@ async function appindex(info=false) {
               }
               $.signMoney = data.data.result.totalMoney;
               // console.log(`您的助力码为${data.data.result.invitedCode}`)
-              console.log(`\n【京东账号${$.index}（${$.UserName}）的好友互助码】${data.data.result.invitedCode}\n`);
+              //console.log(`\n【京东账号${$.index}（${$.UserName}）的好友互助码】${data.data.result.invitedCode}\n`);
               let helpInfo = {
                 'inviteCode': data.data.result.invitedCode,
                 'shareDate': data.data.result.shareDate
@@ -284,28 +284,29 @@ function getSignfromPanda(functionId, body) {
     }
     return new Promise((resolve) => {
         let url = {
-            url: "https://api.zhezhe.cf/jd/sign",
+            url: "http://api.windfgg.cf/jd/sign",
             body: JSON.stringify(data),
 		    followRedirect: false,
 		    headers: {
 		        'Accept': '*/*',
 		        "accept-encoding": "gzip, deflate, br",
 		        'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + jdPandaToken
+				'Authorization': 'Bearer ' + jdWindfggToken
 		    },
 		    timeout: 30000
         }
         $.post(url, async(err, resp, data) => {
             try {				
 				if (err) {
-					console.log(`衰仔，没有连接上熊猫服务，兄弟帮不了你啦！o(╥﹏╥)o`)
+					console.log(`衰仔，没有连接上Windfgg服务，兄弟帮不了你啦！o(╥﹏╥)o`)
 				} else {
 					data = JSON.parse(data);				
 				if (data && data.code == 200) {
                     lnrequesttimes = data.request_times;
-                    console.log("衰仔，连接熊猫服务成功(*^▽^*)，当前Token使用次数为:" + lnrequesttimes);
+                    console.log("衰仔，连接Windfgg服务成功(*^▽^*)，当前Token使用次数为:" + lnrequesttimes);
+										//console.log("衰仔，连接Windfgg服务成功(*^▽^*)");
                     if (data.data){
-                        strsign = data.data.sign || '';
+                        strsign = data.data || '';
 						}
                     if (strsign != ''){
                         resolve(strsign);
