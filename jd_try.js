@@ -6,7 +6,7 @@
  * 上一作者说了每天最多300个商店，总上限为500个，jd_unsubscribe.js我已更新为批量取关版
  * 请提前取关至少250个商店确保京东试用脚本正常运行
  * @Address: https://github.com/X1a0He/jd_scripts_fixed/blob/main/jd_try_xh.js
-cron "4 1-22/8 * * *" jd_try.js, tag:京东试用
+cron "44 1-22/8 * * *" jd_try.js, tag:京东试用
 
  */
 const $ = new Env('京东试用')
@@ -120,7 +120,7 @@ let args_xh = {
      * 可设置环境变量：JD_TRY_APPLYINTERVAL
      * 默认为3000，也就是3秒
      * */
-    applyInterval: process.env.JD_TRY_APPLYINTERVAL * 1 || 10000,
+    applyInterval: process.env.JD_TRY_APPLYINTERVAL * 1 || 30000,
     /*
      * 商品数组的最大长度，通俗来说就是即将申请的商品队列长度
      * 例如设置为20，当第一次获取后获得12件，过滤后剩下5件，将会进行第二次获取，过滤后加上第一次剩余件数
@@ -184,7 +184,7 @@ let args_xh = {
                 $.index = i + 1;
                 $.isLogin = true;
                 $.nickName = '';
-                await totalBean();
+                //await totalBean();
                 console.log(`\n开始【京东账号${$.index}】${$.nickName || $.UserName}\n`);
                 $.except = false;
                 if(args_xh.except.includes($.UserName)){
@@ -545,7 +545,7 @@ function try_MyTrials(page, selected) {
                 'origin': 'https://prodev.m.jd.com',
                 'User-Agent': 'jdapp;iPhone;10.3.4;;;M/5.0;appBuild/167945;jdSupportDarkMode/1;;;Mozilla/5.0 (iPhone; CPU iPhone OS 15_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1;',
                 'referer': 'https://prodev.m.jd.com/',
-                'cookie': `${$.cookie} __jda=1.1.1.1.1.1;`
+                'cookie': `${$.cookie} __jda=1.0;`
             },
         }
         $.post(options, (err, resp, data) => {
@@ -586,7 +586,7 @@ function taskurl_xh(appid, functionId, body = JSON.stringify({})) {
     return {
         "url": `${URL}?appid=${appid}&functionId=${functionId}&clientVersion=10.3.4&client=wh5&body=${encodeURIComponent(body)}`,
         'headers': {
-            'Cookie': `${$.cookie} __jda=1.1.1.1.1.1;`,
+            'Cookie': `${$.cookie} __jda=1.0;`,
             'user-agent': 'jdapp;iPhone;10.1.2;15.0;ff2caa92a8529e4788a34b3d8d4df66d9573f499;network/wifi;model/iPhone13,4;addressid/2074196292;appBuild/167802;jdSupportDarkMode/1;Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1',
             'Referer': 'https://prodev.m.jd.com/',
             'origin': 'https://prodev.m.jd.com/',
