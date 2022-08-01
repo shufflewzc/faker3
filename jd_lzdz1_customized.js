@@ -1,7 +1,7 @@
 /*
-燃动盛夏 伏气满满
+浪漫七夕 放肆约惠
 */
-const $ = new Env("燃动盛夏 伏气满满");
+const $ = new Env("浪漫七夕 放肆约惠");
 const jdCookieNode = $.isNode() ? require("./jdCookie.js") : "";
 const notify = $.isNode() ? require("./sendNotify") : "";
 let cookiesArr = [], cookie = "", message = "";
@@ -55,19 +55,19 @@ if ($.isNode()) {
       $.ADID = getUUID("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", 1);
       $.UUID = getUUID("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
       authorCodeList = [
-        '7685382981bf4cdab0a033a414b3ee53',
-        '26bde642d3bc41aa8762b3a20948bc30',
-        '99a10aa547ae425f8245479a3f6cc680',
+        '6b8106de4c77406d8fc0691f7363f8bd',
+        // 'ee1cffb7a3c04c25afbcbe4ff8a3adc1',
+        // '99a10aa547ae425f8245479a3f6cc680',
       ];
       // $.authorCode = authorCodeList[random(0, authorCodeList.length)];
       $.authorCode = ownCode ? ownCode : authorCodeList[random(0, authorCodeList.length)]
       $.authorNum = `${random(1000000, 9999999)}`;
       $.randomCode = random(1000000, 9999999);
-      $.activityId = "ac7124baef6b48398f75a932a23d0408";
-      $.activityShopId = "1000004065";
+      $.activityId = "fbfd6f75f0f845418801dfc46e15d7a5";
+      $.activityShopId = "1000000904";
       $.activityUrl = `https://lzdz1-isv.isvjcloud.com/dingzhi/joinCommon/activity/${$.authorNum}?activityId=${$.activityId}&shareUuid=${encodeURIComponent($.authorCode)}&adsource=&shareuserid4minipg=${encodeURIComponent($.secretPin)}&shopid=1000004065&lng=00.000000&lat=00.000000&sid=&un_area=`;
       await member();
-      await $.wait(1000);
+      await $.wait(3000);
       if ($.bean > 0) {
         message += `\n【京东账号${$.index}】${$.nickName || $.UserName} \n       └ 获得 ${$.bean} 京豆。`;
       }
@@ -111,9 +111,9 @@ async function member() {
       }
       $.log("关注店铺");
       await task("joinCommon/doTask", `activityId=${$.activityId}&uuid=${$.actorUuid}&pin=${encodeURIComponent($.secretPin)}&taskType=20&taskValue=`);
-      await $.wait(1000);
+      await $.wait(500);
       await task("joinCommon/doTask", `activityId=${$.activityId}&uuid=${$.actorUuid}&pin=${encodeURIComponent($.secretPin)}&taskType=23&taskValue=`);
-      await $.wait(1000);
+      await $.wait(500);
       await task("joinCommon/taskInfo", `pin=${encodeURIComponent($.secretPin)}&activityId=${$.activityId}`);
       $.log("加入店铺会员");
       if ($.openCardList) {
@@ -127,15 +127,15 @@ async function member() {
           await getShopOpenCardInfo({ venderId: `${vo.value}`, channel: "401" }, vo.value);
           // console.log($.openCardActivityId)
           await bindWithVender({ venderId: `${vo.value}`, bindByVerifyCodeFlag: 1, registerExtend: {}, writeChildFlag: 0, activityId: 2329491, channel: 401 }, vo.value);
-          await $.wait(1000);
+          // await $.wait(500);
         }
       } else {
         $.log("没有获取到对应的任务。\n");
       }
-      await task("joinCommon/taskInfo", `pin=${encodeURIComponent($.secretPin)}&activityId=${$.activityId}`);
-      await task("joinCommon/activityContent", `activityId=${$.activityId}&pin=${encodeURIComponent($.secretPin)}&pinImg=&nick=${encodeURIComponent($.pin)}&cjyxPin=&cjhyPin=&shareUuid=${encodeURIComponent($.authorCode)}`, 0, 1);
+      // await task("joinCommon/taskInfo", `pin=${encodeURIComponent($.secretPin)}&activityId=${$.activityId}`);
+      // await task("joinCommon/activityContent", `activityId=${$.activityId}&pin=${encodeURIComponent($.secretPin)}&pinImg=&nick=${encodeURIComponent($.pin)}&cjyxPin=&cjhyPin=&shareUuid=${encodeURIComponent($.authorCode)}`, 0, 1);
       console.log("去助力 -> " + $.authorCode);
-      // await task("joinCommon/assist/status", `activityId=${$.activityId}&pin=${encodeURIComponent($.secretPin)}&uuid=${$.actorUuid}&shareUuid=${$.authorCode}`);
+      // // await task("joinCommon/assist/status", `activityId=${$.activityId}&pin=${encodeURIComponent($.secretPin)}&uuid=${$.actorUuid}&shareUuid=${$.authorCode}`);
       await task("joinCommon/assist", `activityId=${$.activityId}&pin=${encodeURIComponent($.secretPin)}&uuid=${$.actorUuid}&shareUuid=${$.authorCode}`);
       // await task('linkgame/help/list', `pin=${encodeURIComponent($.secretPin)}&activityId=${$.activityId}`)
 
@@ -149,7 +149,7 @@ async function member() {
       // await getToken();
       // console.log('抽奖 -> ')
       // await $.wait(2000)
-      // await task('linkgame/draw', `activityId=${$.activityId}&actorUuid=${$.actorUuid}&pin=${encodeURIComponent($.secretPin)}`);
+      await task('joinCommon/startDraw', `activityId=${$.activityId}&uuid=${$.actorUuid}&pin=${encodeURIComponent($.secretPin)}`);
       // console.log('100 -> ')
       // await getFirstLZCK()
       // await getToken();
@@ -174,7 +174,7 @@ function task(function_id, body, isCommon = 0, own = 0) {
                   $.jdActivityId = data.data.jdActivityId;
                   $.venderId = data.data.venderId;
                   $.activityType = data.data.activityType;
-                  // console.log($.venderId)
+                  console.log($.venderId)
                   break;
                 case "wxActionCommon/getUserInfo":
                   break;
@@ -196,7 +196,7 @@ function task(function_id, body, isCommon = 0, own = 0) {
                   $.openCardStatus = data.data;
                   // console.log($.openCardList)
                   break;
-                case "joinCommon/doTask":
+                case "joinCommon/startDraw":
                   console.log(data);
                   if (data.data) {
                     $.addScore = data.data.addScore 
