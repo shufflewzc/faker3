@@ -48,11 +48,11 @@ if ($.isNode()) {
   if (process.env.PIGPETSHARECODE) {
     shareId = process.env.PIGPETSHARECODE
   } else {
-    let res = await getAuthorShareCode('')
+    let res = await getAuthorShareCode('https://raw.githubusercontent.com/Aaron-lv/updateTeam/master/shareCodes/pigPet.json')
     if (!res) {
-      $.http.get({url: ''}).then((resp) => {}).catch((e) => console.log('刷新CDN异常', e));
+      $.http.get({url: 'https://purge.jsdelivr.net/gh/Aaron-lv/updateTeam@master/shareCodes/pigPet.json'}).then((resp) => {}).catch((e) => console.log('刷新CDN异常', e));
       await $.wait(2000)
-      res = await getAuthorShareCode('')
+      res = await getAuthorShareCode('https://cdn.jsdelivr.net/gh/Aaron-lv/updateTeam@master/shareCodes/pigPet.json')
     }
     if (res && res.length) shareId = res[Math.floor((Math.random() * res.length))]
   }
