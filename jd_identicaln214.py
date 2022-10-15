@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 cron: 50 * * * *
-new Env('禁用重复任务青龙2.11版本');
+new Env('禁用重复任务青龙2.14版本');
 """
 
 import json
@@ -28,7 +28,7 @@ if not ipport:
     ipport = "localhost:5700"
 else:
     ipport = ipport.lstrip("http://").rstrip("/")
-sub_str = os.getenv("RES_SUB", "shufflewzc_faker3_main")
+sub_str = os.getenv("RES_SUB", "shufflewzc_faker2_main")
 sub_list = sub_str.split("&")
 res_only = os.getenv("RES_ONLY", True)
 headers = {
@@ -65,7 +65,7 @@ def get_tasklist() -> list:
 def filter_res_sub(tasklist: list) -> tuple:
     filter_list = []
     res_list = []
-    for task in tasklist:
+    for task in tasklist['data']:
         for sub in sub_list:
             if task.get("command").find(sub) == -1:
                 flag = False
