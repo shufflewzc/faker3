@@ -167,7 +167,7 @@ function getJingBeanBalanceDetail(page){
     });
 }
 
-function totalBean(){
+function TotalBean(){
     $.jdName = ``
     return new Promise(async resolve => {
         const options = {
