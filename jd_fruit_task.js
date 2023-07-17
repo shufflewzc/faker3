@@ -1,6 +1,7 @@
 /*
 东东水果:脚本更新地址 jd_fruit_task.js
-更新时间：2021-5-18
+更新时间：2023-7-17
+修复当日浇水次数统计与预估成熟时间
 活动入口：京东APP我的-更多工具-东东农场
 东东农场活动链接：https://h5.m.jd.com/babelDiy/Zeus/3KSjXqQabiTuD1cJ28QskrpWoBKT/index.html
 已支持IOS双京东账号,Node.js支持N个京东账号
@@ -289,7 +290,8 @@ async function predictionFruit() {
     console.log('开始预测水果成熟时间\n');
     await initForFarm();
     await taskInitForFarm();
-    let waterEveryDayT = $.farmTask.totalWaterTaskInit.totalWaterTaskTimes; //今天到到目前为止，浇了多少次水
+    // let waterEveryDayT = $.farmTask.totalWaterTaskInit.totalWaterTaskTimes; //今天到到目前为止，浇了多少次水 (这里返回错误，只显示10次)
+    let waterEveryDayT = $.farmTask.firstWaterInit.totalWaterTimes; //今天到到目前为止，浇了多少次水
     message += `【今日共浇水】${waterEveryDayT}次\n`;
     message += `【剩余 水滴】${$.farmInfo.farmUserPro.totalEnergy}g💧\n`;
     message += `【水果🍉进度】${(($.farmInfo.farmUserPro.treeEnergy / $.farmInfo.farmUserPro.treeTotalEnergy) * 100).toFixed(2)}%，已浇水${$.farmInfo.farmUserPro.treeEnergy / 10}次,还需${($.farmInfo.farmUserPro.treeTotalEnergy - $.farmInfo.farmUserPro.treeEnergy) / 10}次\n`
@@ -436,8 +438,8 @@ async function doTenWaterAgain() {
             console.log(`您目前水滴:${totalEnergy}g,水滴换豆卡${$.myCardInfoRes.beanCard}张,暂不满足水滴换豆的条件,为您继续浇水`)
         }
     }
-    // if (totalEnergy > 100 && $.myCardInfoRes.fastCard > 0) {
-    //   //使用快速浇水卡
+    // if (totalEnergy > retainWater + 100 && $.myCardInfoRes.fastCard > 0) {
+    //   //使用快速浇水卡(每次浇100滴)
     //   await userMyCardForFarm('fastCard');
     //   console.log(`使用快速浇水卡结果:${JSON.stringify($.userMyCardRes)}`);
     //   if ($.userMyCardRes.code === '0') {
