@@ -1,7 +1,7 @@
 /*
 东东水果:脚本更新地址 jd_fruit_task.js
 更新时间：2023-7-17
-修复当日浇水次数统计与预估成熟时间；水滴过多时恢复使用快速浇水卡
+修复当日浇水次数统计与预估成熟时间
 活动入口：京东APP我的-更多工具-东东农场
 东东农场活动链接：https://h5.m.jd.com/babelDiy/Zeus/3KSjXqQabiTuD1cJ28QskrpWoBKT/index.html
 已支持IOS双京东账号,Node.js支持N个京东账号
@@ -438,16 +438,16 @@ async function doTenWaterAgain() {
             console.log(`您目前水滴:${totalEnergy}g,水滴换豆卡${$.myCardInfoRes.beanCard}张,暂不满足水滴换豆的条件,为您继续浇水`)
         }
     }
-    if (totalEnergy > retainWater + 100 && $.myCardInfoRes.fastCard > 0) {
-      //使用快速浇水卡(每次浇100滴)
-      await userMyCardForFarm('fastCard');
-      console.log(`使用快速浇水卡结果:${JSON.stringify($.userMyCardRes)}`);
-      if ($.userMyCardRes.code === '0') {
-        console.log(`已使用快速浇水卡浇水${$.userMyCardRes.waterEnergy}g`);
-      }
-      await initForFarm();
-      totalEnergy  = $.farmInfo.farmUserPro.totalEnergy;
-    }
+    // if (totalEnergy > retainWater + 100 && $.myCardInfoRes.fastCard > 0) {
+    //   //使用快速浇水卡(每次浇100滴)
+    //   await userMyCardForFarm('fastCard');
+    //   console.log(`使用快速浇水卡结果:${JSON.stringify($.userMyCardRes)}`);
+    //   if ($.userMyCardRes.code === '0') {
+    //     console.log(`已使用快速浇水卡浇水${$.userMyCardRes.waterEnergy}g`);
+    //   }
+    //   await initForFarm();
+    //   totalEnergy  = $.farmInfo.farmUserPro.totalEnergy;
+    // }
     // 所有的浇水(10次浇水)任务，获取水滴任务完成后，如果剩余水滴大于等于60g,则继续浇水(保留部分水滴是用于完成第二天的浇水10次的任务)
   if (totalEnergy < retainWater) {
     console.log('保留水滴不足,停止继续浇水')
