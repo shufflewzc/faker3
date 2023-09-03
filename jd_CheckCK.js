@@ -23,7 +23,7 @@ const api = got.extend({
 
 let ShowSuccess = "false",
 CKAlwaysNotify = "false",
-CKAutoEnable = "true",
+CKAutoEnable = "false",
 NoWarnError = "false";
 
 let MessageUserGp2 = "";
@@ -159,7 +159,12 @@ if ($.isNode() && process.env.CHECKCK_ALLNOTIFY) {
             TempDisableMessage = '';
             TempEnableMessage = '';
             TempOErrorMessage = '';
-
+			iswait=true;
+            var strnowstatus = await getstatus(tempid);
+            if (strnowstatus == 99) {
+                strnowstatus = envs[i].status;
+            }			
+			
             console.log(`开始检测【京东账号${$.index}】${$.UserName2} ....\n`);
             if (MessageUserGp4) {
                 userIndex4 = MessageUserGp4.findIndex((item) => item === $.UserName);
@@ -193,28 +198,34 @@ if ($.isNode() && process.env.CHECKCK_ALLNOTIFY) {
                 IndexAll += 1;
                 ReturnMessageTitle = `【账号${IndexAll}🆔】${$.UserName2}`;
             }
+			if (strnowstatus == 1 && CKAutoEnable== "false") {
+				console.log(`账号是禁用状态，跳过检测....\n`);
+				$.isLogin = false;
+				iswait=false;
+			}
+			else {
 
-            await TotalBean();
-            if ($.NoReturn) {
-                console.log(`接口1检测失败，尝试使用接口2....\n`);
-                await isLoginByX1a0He();
-            } else {
-                if ($.isLogin) {
-                    if (!$.nickName) {
-                        console.log(`获取的别名为空，尝试使用接口2验证....\n`);
-                        await isLoginByX1a0He();
-                    } else {
-                        console.log(`成功获取到别名: ${$.nickName},Pass!\n`);
-                    }
-                }
-            }
-
+			    await TotalBean();
+			    if ($.NoReturn) {
+			        console.log(`接口1检测失败，尝试使用接口2....\n`);
+			        await isLoginByX1a0He();
+			    } else {
+			        if ($.isLogin) {
+			            if (!$.nickName) {
+			                console.log(`获取的别名为空，尝试使用接口2验证....\n`);
+			                await isLoginByX1a0He();
+			            } else {
+			                console.log(`成功获取到别名: ${$.nickName},Pass!\n`);
+			            }
+			        }
+			    }
+			}
             if ($.error) {
                 console.log(`有错误，跳出....`);
                 TempOErrorMessage = $.error;
 
             } else {
-                const strnowstatus = await getstatus(tempid);
+                strnowstatus = await getstatus(tempid);
                 if (strnowstatus == 99) {
                     strnowstatus = envs[i].status;
                 }
@@ -312,8 +323,10 @@ if ($.isNode() && process.env.CHECKCK_ALLNOTIFY) {
             }
 
         }
-        console.log(`等待2秒.......	\n`);
-        await $.wait(2 * 1000)
+		if(iswait){
+			console.log(`等待2秒.......	\n`);
+			await $.wait(2 * 1000);
+		}
     }
 
     if ($.isNode()) {
