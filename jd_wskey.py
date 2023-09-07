@@ -14,10 +14,24 @@ import time  # 时间
 import re  # 正则过滤
 import hmac
 import struct
+import random
 
 WSKEY_MODE = 0
 # 0 = Default / 1 = Debug!
-
+def getua():
+    global uuid,addressid,iosVer,iosV,clientVersion,iPhone,area,ADID
+    uuid=''.join([str(random.randint(0, 9)) for _ in range(40)])
+    addressid = ''.join(random.sample('1234567898647', 10))
+    iosVer = ''.join(random.sample(["15.1.1","14.5.1", "14.4", "14.3", "14.2", "14.1", "14.0.1"], 1))
+    iosV = iosVer.replace('.', '_')
+    clientVersion=''.join(random.sample(["10.3.0", "10.2.7", "10.2.4"], 1))
+    iPhone = ''.join(random.sample(["8", "9", "10", "11", "12", "13"], 1))
+    ADID = ''.join(random.sample('0987654321ABCDEF', 8)) + '-' + ''.join(random.sample('0987654321ABCDEF', 4)) + '-' + ''.join(random.sample('0987654321ABCDEF', 4)) + '-' + ''.join(random.sample('0987654321ABCDEF', 4)) + '-' + ''.join(random.sample('0987654321ABCDEF', 12))
+    UserAgent=''
+    if not UserAgent:
+        return f'jdapp;iPhone;{clientVersion};{iosVer};{uuid};network/wifi;ADID/{ADID};model/iPhone{iPhone},1;addressid/{addressid};appBuild/167707;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS {iosV} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/null;supportJDSHWK/1'
+    else:
+        return UserAgent
 if "WSKEY_DEBUG" in os.environ or WSKEY_MODE:  # 判断调试模式变量
     logging.basicConfig(level=logging.DEBUG, format='%(message)s')  # 设置日志为 Debug等级输出
     logger = logging.getLogger(__name__)  # 主模块
@@ -305,7 +319,7 @@ def check_ck(ck):  # 方法 检查 Cookie有效性 使用变量传递 单次调�
 
 
 # 返回值 bool jd_ck
-def getToken(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返回 这里传递 wskey
+def getTokenx(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返回 这里传递 wskey
     if flag == 'bak':
         return getToken_bak(wskey) 
     try:  # 异常捕捉
@@ -338,7 +352,7 @@ def getToken(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返�
         return appjmp(wskey, tokenKey)  # 传递 wskey, Tokenkey 执行方法 [appjmp]
 
 # 备用
-def getToken_bak(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返回 这里传递 wskey
+def getToken(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返回 这里传递 wskey
     try:  # 异常捕捉
         url = str(base64.b64decode('aHR0cHM6Ly9hcGkubm9sYW5zdG9yZS5jYy8=').decode()) + 'sign'  # 设置云端服务器地址 路由为 genToken
         header = {"Content-Type": "application/json"}  # 设置 HTTP头
@@ -609,16 +623,16 @@ if __name__ == '__main__':  # Python主函数执行入口
     s.headers.update({"authorization": "Bearer " + str(token)})  # 增加 HTTP头认证
     s.headers.update({"Content-Type": "application/json;charset=UTF-8"})  # 增加 HTTP头 json 类型
     ql_id = check_id()  # 调用方法 [check_id] 并赋值 [ql_id]
-    url_t = check_cloud()  # 调用方法 [check_cloud] 并赋值 [url_t]
-    flag = ''
-    if url_t == 403:
-        logger.info("\n尝试使用nolan接口请求\n")
-        ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
-        flag = 'bak'
-    else:
-        cloud_arg = cloud_info()  # 调用方法 [cloud_info] 并赋值 [cloud_arg]
-        update()  # 调用方法 [update]    
-        ua = cloud_arg['User-Agent']  # 设置全局变量 UA
+    #url_t = check_cloud()  # 调用方法 [check_cloud] 并赋值 [url_t]
+    #flag = ''
+    #if url_t == 403:
+    #    logger.info("\n尝试使用nolan接口请求\n")
+    #    ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
+    #    flag = 'bak'
+    #else:
+    #    cloud_arg = cloud_info()  # 调用方法 [cloud_info] 并赋值 [cloud_arg]
+    #    update()  # 调用方法 [update]    
+    #    ua = cloud_arg['User-Agent']  # 设置全局变量 UA
     wslist = get_wskey()  # 调用方法 [get_wskey] 并赋值 [wslist]
     envlist = get_env()  # 调用方法 [get_env] 并赋值 [envlist]
     if "WSKEY_SLEEP" in os.environ and str(os.environ["WSKEY_SLEEP"]).isdigit():  # 判断变量[WSKEY_SLEEP]是否为数字类型
@@ -626,6 +640,7 @@ if __name__ == '__main__':  # Python主函数执行入口
     else:  # 判断分支
         sleepTime = 10  # 默认休眠时间 10秒
     for ws in wslist:  # wslist变量 for循环  [wslist -> ws]
+        ua = getua()
         wspin = ws.split(";")[0]  # 变量分割 ;
         if "pin" in wspin:  # 判断 pin 是否存在于 [wspin]
             wspin = "pt_" + wspin + ";"  # 封闭变量
@@ -633,7 +648,7 @@ if __name__ == '__main__':  # Python主函数执行入口
             if return_serch[0]:  # bool: True 搜索到账号
                 jck = str(return_serch[1])  # 拿到 JD_COOKIE
                 if not check_ck(jck):  # bool: False 判定 JD_COOKIE 有效性
-                    tryCount = 1  # 重试次数 1次
+                    tryCount = 2  # 重试次数 2次
                     if "WSKEY_TRY_COUNT" in os.environ:  # 判断 [WSKEY_TRY_COUNT] 是否存在于系统变量
                         if os.environ["WSKEY_TRY_COUNT"].isdigit():  # 判断 [WSKEY_TRY_COUNT] 是否为数字
                             tryCount = int(os.environ["WSKEY_TRY_COUNT"])  # 设置 [tryCount] int
