@@ -1,565 +1,697 @@
-from requests import get, post, put, packages
-import requests
-from re import findall
-from os.path import exists
-import json
-import os
-import sys,re
-import random,time
-import base64
-import hashlib
-import urllib.parse
-import uuid
+# -*- coding: utf-8 -*
+'''
+定时自定义
+2 10 20 5 * jd_wskey.py
+new Env('wskey转换');
+'''
+import socket  # 用于端口检测
+import base64  # 用于编解码
+import json  # 用于Json解析
+import os  # 用于导入系统变量
+import sys  # 实现 sys.exit
+import logging  # 用于日志输出
+import time  # 时间
+import re  # 正则过滤
+import hmac
+import struct
+import random
 
-packages.urllib3.disable_warnings()
-from urllib.parse import unquote
-"""
-new Env('wskey本地转换');
-57 9 9 9 * jd_wsck.py
-by:lonesomexz
-"""
-hadsend=True
-UserAgent=""
-
-def printf(text):
-    print(text)
-    sys.stdout.flush()
-
-def randomuserAgent():
-    global struuid,addressid,iosVer,iosV,clientVersion,iPhone,area,ADID,lng,lat
-    global UserAgent
-    struuid=''.join(random.sample(['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9','a','b','c','z'], 40))
+WSKEY_MODE = 0
+# 0 = Default / 1 = Debug!
+def getua():
+    global uuid,addressid,iosVer,iosV,clientVersion,iPhone,area,ADID
+    uuid=''.join([str(random.randint(0, 9)) for _ in range(40)])
     addressid = ''.join(random.sample('1234567898647', 10))
     iosVer = ''.join(random.sample(["15.1.1","14.5.1", "14.4", "14.3", "14.2", "14.1", "14.0.1"], 1))
     iosV = iosVer.replace('.', '_')
     clientVersion=''.join(random.sample(["10.3.0", "10.2.7", "10.2.4"], 1))
     iPhone = ''.join(random.sample(["8", "9", "10", "11", "12", "13"], 1))
-    area=''.join(random.sample('0123456789', 2)) + '_' + ''.join(random.sample('0123456789', 4)) + '_' + ''.join(random.sample('0123456789', 5)) + '_' + ''.join(random.sample('0123456789', 5))
     ADID = ''.join(random.sample('0987654321ABCDEF', 8)) + '-' + ''.join(random.sample('0987654321ABCDEF', 4)) + '-' + ''.join(random.sample('0987654321ABCDEF', 4)) + '-' + ''.join(random.sample('0987654321ABCDEF', 4)) + '-' + ''.join(random.sample('0987654321ABCDEF', 12))
-    lng='119.31991256596'+str(random.randint(100,999))
-    lat='26.1187118976'+str(random.randint(100,999))
-    UserAgent=f'jdapp;iPhone;10.0.4;{iosVer};{uuid};network/wifi;ADID/{ADID};model/iPhone{iPhone},1;addressid/{addressid};appBuild/167707;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS {iosV} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/null;supportJDSHWK/1'
+    UserAgent=''
+    if not UserAgent:
+        return f'jdapp;iPhone;{clientVersion};{iosVer};{uuid};network/wifi;ADID/{ADID};model/iPhone{iPhone},1;addressid/{addressid};appBuild/167707;jdSupportDarkMode/0;Mozilla/5.0 (iPhone; CPU iPhone OS {iosV} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/null;supportJDSHWK/1'
+    else:
+        return UserAgent
+if "WSKEY_DEBUG" in os.environ or WSKEY_MODE:  # 判断调试模式变量
+    logging.basicConfig(level=logging.DEBUG, format='%(message)s')  # 设置日志为 Debug等级输出
+    logger = logging.getLogger(__name__)  # 主模块
+    logger.debug("\nDEBUG模式开启!\n")  # 消息输出
+else:  # 判断分支
+    logging.basicConfig(level=logging.INFO, format='%(message)s')  # Info级日志
+    logger = logging.getLogger(__name__)  # 主模块
+
+try:  # 异常捕捉
+    import requests  # 导入HTTP模块
+except Exception as e:  # 异常捕捉
+    logger.info(str(e) + "\n缺少requests模块, 请执行命令：pip3 install requests\n")  # 日志输出
+    sys.exit(1)  # 退出脚本
+os.environ['no_proxy'] = '*'  # 禁用代理
+requests.packages.urllib3.disable_warnings()  # 抑制错误
+try:  # 异常捕捉
+    from sendNotify import send  # 导入青龙消息通知模块
+except Exception as err:  # 异常捕捉
+    logger.debug(str(err))  # 调试日志输出
+    logger.info("无推送文件")  # 标准日志输出
+
+ver = 21212  # 版本号
 
 
-def get_proxy_api(proxy_url, max_retries=5, timeout=60, retry_delay=1):
-    for retry in range(max_retries):
-        res = get(url=proxy_url)
-        printf(f"本次获取到的代理：{res.text}")
-        proxy_ip_port = res.text.strip()
-        proxy_address = f"http://{proxy_ip_port}"
+# def ql_2fa():
+#     ''' Demo
+#     if "WSKEY_TOKEN" in os.environ:
+#     url = 'http://127.0.0.1:{0}/api/user'.format(port)  # 设置 URL地址
+#     try:  # 异常捕捉
+#         res = s.get(url)  # HTTP请求 [GET] 使用 session
+#     except Exception as err:  # 异常捕捉
+#         logger.debug(str(err))  # 调试日志输出
+#     else:  # 判断分支
+#         if res.status_code == 200 and res.json()["code"] == 200:
+#             twoFactorActivated = str(res.json()["data"]["twoFactorActivated"])
+#             if twoFactorActivated == 'true':
+#                 logger.info("青龙 2FA 已开启!")
+#     url = 'http://127.0.0.1:{0}/api/envs?searchValue=WSKEY_Client'.format(port)  # 设置 URL地址
+#     res = s.get(url)
+#     if res.status_code == 200 and res.json()["code"] == 200:
+#         data = res.json()["data"]
+#         if len(data) == 0:
+#             url = 'http://127.0.0.1:{0}/api/apps'
+#             data = json.dumps({
+#                 "name": "wskey",
+#                 "scopes": ["crons", "envs", "configs", "scripts", "logs", "dependencies", "system"]
+#             })
+#             res = s.post(url, data=data)
+#             if res.status_code == 200 and res.json()["code"] == 200:
+#                 logger.info("OpenApi创建成功")
+#                 client_id = res.json()["data"]["client_id"]
+#                 client_secret = res.json()["data"]["client_secret"]
+#                 wskey_value = 'client_id={0}&client_secret={1}'.format(client_id, client_secret)
+#                 data = [{"value": wskey_value, "name": "WSKEY_Client", "remarks": "WSKEY_OpenApi请勿删除"}]
+#                 data = json.dumps(data)  # Json格式化数据
+#                 url = 'http://127.0.0.1:{0}/api/envs'.format(port)  # 设置 URL地址
+#                 s.post(url=url, data=data)  # HTTP[POST]请求 使用session
+#                 logger.info("\nWSKEY_Client变量添加完成\n--------------------\n")  # 标准日志输出
+#     '''
 
+def ttotp(key):
+    key = base64.b32decode(key.upper() + '=' * ((8 - len(key)) % 8))
+    counter = struct.pack('>Q', int(time.time() / 30))
+    mac = hmac.new(key, counter, 'sha1').digest()
+    offset = mac[-1] & 0x0f
+    binary = struct.unpack('>L', mac[offset:offset + 4])[0] & 0x7fffffff
+    return str(binary)[-6:].zfill(6)
+
+
+def ql_send(text):
+    if "WSKEY_SEND" in os.environ and os.environ["WSKEY_SEND"] == 'disable':
+        return True
+    else:
+        try:  # 异常捕捉
+            send('WSKEY转换', text)  # 消息发送
+        except Exception as err:  # 异常捕捉
+            logger.debug(str(err))  # Debug日志输出
+            logger.info("通知发送失败")  # 标准日志输出
+
+
+# 登录青龙 返回值 token
+def get_qltoken(username, password, twoFactorSecret):  # 方法 用于获取青龙 Token
+    logger.info("Token失效, 新登陆\n")  # 日志输出
+    if twoFactorSecret:
         try:
-            response = get("https://jd.com", proxies={"http": proxy_address, "https": proxy_address}, timeout=timeout)
-            if response.status_code == 200:
-                return proxy_address
-        except Exception as e:
-            print(f"代理检测失败，错误信息：{e}")
-
-        print("代理检测失败，重新获取...")
-        time.sleep(retry_delay)
-    
-    print("无法获取可用的代理IP，尝试次数已达上限。")
-    return None
-
-
-
-def load_send():
-    global send
-    global hadsend
-    cur_path = os.path.abspath(os.path.dirname(__file__))
-    sys.path.append(cur_path)
-    if os.path.exists(cur_path + "/sendNotify.py"):
-        try:
-            from sendNotify import send
-            hadsend=True
-        except:
-            printf("加载sendNotify.py的通知服务失败，请检查~")
-            hadsend=False
-    else:
-        printf("加载通知服务失败,缺少sendNotify.py文件")
-        hadsend=False
-load_send()
-
-def send_notification(title, content,summary):
-    # Add your own WxPusher API key here
-    api_key = os.environ["WP_APP_TOKEN_ONE"]
-    uids= os.environ["WP_APP_MAIN_UID"]
-    desp = '''<section style="width: 24rem; max-width: 100%;border:none;border-style:none;margin:2.5rem auto;" id="shifu_imi_57"
-    donone="shifuMouseDownPayStyle(&#39;shifu_imi_57&#39;)">
-    <section
-        style="margin: 0px auto;text-align: left;border: 2px solid #212122;padding: 10px 0px;box-sizing:border-box; width: 100%; display:inline-block;"
-        class="ipaiban-bc">
-        <section style="margin-top: 1rem; float: left; margin-left: 1rem; margin-left: 1rem; font-size: 1.3rem; font-weight: bold;">
-            <p style="margin: 0; color: black">
-                texttext
-            </p>
-        </section>
-        <section style="display: block;width: 0;height: 0;clear: both;"></section>
-        <section
-            style="margin-top:20px; display: inline-block; border-bottom: 1px solid #212122; padding: 4px 20px; box-sizing:border-box;"
-            class="ipaiban-bbc">
-            <section
-                style="width:25px; height:25px; border-radius:50%; background-color:#212122;display:inline-block;line-height: 25px"
-                class="ipaiban-bg">
-                <p style="text-align:center;font-weight:1000;margin:0">
-                    <span style="color: #ffffff;font-size:20px;">📢</span>
-                </p>
-            </section>
-            <section style="display:inline-block;padding-left:10px;vertical-align: top;box-sizing:border-box;">
-            </section>
-        </section>
-        <section style="margin-top:0rem;padding: 0.8rem;box-sizing:border-box;">
-            <p style=" line-height: 1.6rem; font-size: 1.1rem; ">
-                despdesp
-			</p>            
-        </section>
-    </section>
-</section>'''
-    desp=desp.replace("texttext",title)
-    desp=desp.replace("despdesp" ,content.replace("\n", '<br>'))
-
-
-    payload = {"appToken": api_key,
-                "content": desp,
-                "summary": title+"\n"+summary,
-                "contentType": 2,
-                "uids": [uids]
-                }
-                    
-    # Send the request
-    res = requests.post('http://wxpusher.zjiecode.com/api/send/message', json=payload, timeout=15).json()
-    if res["code"]==1000:
-        printf("WxPusher 发送通知消息成功!")
-    else:
-        printf(res.text)
-
-
-def randomstr(num):
-    randomstr = ''.join(str(uuid.uuid4()).split('-'))[num:]
-    return randomstr
-
-def randomstr1(num):
-    randomstr = ""
-    for i in range(num):
-        randomstr = randomstr + random.choice("abcdefghijklmnopqrstuvwxyz0123456789")
-    return randomstr
-
-def sign_core(inarg):
-    key = b'80306f4370b39fd5630ad0529f77adb6'
-    mask = [0x37, 0x92, 0x44, 0x68, 0xA5, 0x3D, 0xCC, 0x7F, 0xBB, 0xF, 0xD9, 0x88, 0xEE, 0x9A, 0xE9, 0x5A]
-    array = [0 for _ in range(len(inarg))]
-    for i in range(len(inarg)):
-        r0 = int(inarg[i])
-        r2 = mask[i & 0xf]
-        r4 = int(key[i & 7])
-        r0 = r2 ^ r0
-        r0 = r0 ^ r4
-        r0 = r0 + r2
-        r2 = r2 ^ r0
-        r1 = int(key[i & 7])
-        r2 = r2 ^ r1
-        array[i] = r2 & 0xff
-    return bytes(array)
-
-def base64Encode(string):
-    return base64.b64encode(string.encode("utf-8")).decode('utf-8').translate(str.maketrans("KLMNOPQRSTABCDEFGHIJUVWXYZabcdopqrstuvwxefghijklmnyz0123456789+/", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"))
-
-def base64Decode(string):
-    return base64.b64decode(string.translate(str.maketrans("KLMNOPQRSTABCDEFGHIJUVWXYZabcdopqrstuvwxefghijklmnyz0123456789+/", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"))).decode('utf-8')
-
-def randomeid():
-    return 'eidAaf8081218as20a2GM%s7FnfQYOecyDYLcd0rfzm3Fy2ePY4UJJOeV0Ub840kG8C7lmIqt3DTlc11fB/s4qsAP8gtPTSoxu' % randomstr1(20)
-
-def get_ep(jduuid : str=''):
-    if not jduuid:
-        jduuid = randomstr(16)
-    ts = str(int(time.time() * 1000))
-    bsjduuid = base64Encode(jduuid)
-    area = base64Encode('%s_%s_%s_%s' % (
-        random.randint(1, 10000), random.randint(1, 10000), random.randint(1, 10000), random.randint(1, 10000)))
-    d_model = random.choice(['Mi11Ultra', 'Mi11', 'Mi10'])
-    d_model = base64Encode(d_model)
-    return '{"hdid":"JM9F1ywUPwflvMIpYPok0tt5k9kW4ArJEU3lfLhxBqw=","ts":%s,"ridx":-1,"cipher":{"area":"%s","d_model":"%s","wifiBssid":"dW5hbw93bq==","osVersion":"CJS=","d_brand":"WQvrb21f","screen":"CtS1DIenCNqm","uuid":"%s","aid":"%s","openudid":"%s"},"ciphertype":5,"version":"1.2.0","appname":"com.jingdong.app.mall"}' % (
-        int(ts) - random.randint(100, 1000), area, d_model, bsjduuid, bsjduuid, bsjduuid), jduuid, ts
-
-def get_sign(functionId, body, client : str="android", clientVersion : str='11.2.8',jduuid : str='') -> dict:
-    if isinstance(body,dict):
-        d=body
-        body=json.dumps(body)
-    else:
-        d=json.loads(body)
-
-    if "eid" in d:
-        eid=d["eid"]
-    else:
-        eid=randomeid()
-
-    ep, suid, st = get_ep(jduuid)
-    sv = random.choice(["102", "111", "120"])
-    all_arg = "functionId=%s&body=%s&uuid=%s&client=%s&clientVersion=%s&st=%s&sv=%s" % (functionId, body, suid, client, clientVersion, st, sv)
-    back_bytes = sign_core(str.encode(all_arg))
-    sign = hashlib.md5(base64.b64encode(back_bytes)).hexdigest()
-    convertUrl='functionId=%s&body=%s&clientVersion=%s&client=%s&sdkVersion=31&lang=zh_CN&harmonyOs=0&networkType=wifi&oaid=%s&eid=%s&ef=1&ep=%s&st=%s&sign=%s&sv=%s' % (functionId,body, clientVersion, client, suid, eid, urllib.parse.quote(ep), st, sign, sv)
-    return convertUrl
-    
-def getcookie_wskey(key):
-    proxys = proxy_url
-    if os.environ.get("WSKEY_PROXY_URL") is not None:
-        proxys = get_proxy_api(proxy_url)
-
-    body = "body=%7B%22to%22%3A%22https%3A//plogin.m.jd.com/jd-mlogin/static/html/appjmp_blank.html%22%7D"
-    pin = findall("pin=([^;]*);", key)[0]
-
-            
-    for num in range(0,5):
-        sign = get_sign("genToken",{"url": "https://plogin.m.jd.com/jd-mlogin/static/html/appjmp_blank.html"},"android","11.2.8")       
-        url = f"https://api.m.jd.com/client.action?functionId=genToken&{sign}"
+            twoCode = ttotp(twoFactorSecret)
+        except Exception as err:
+            logger.debug(str(err))  # Debug日志输出
+            logger.info("TOTP异常")
+            sys.exit(1)
+        url = ql_url + "api/user/login"  # 设置青龙地址 使用 format格式化自定义端口
+        payload = json.dumps({
+            'username': username,
+            'password': password
+        })  # HTTP请求载荷
         headers = {
-            "cookie": key,
-            'user-agent': UserAgent,
-            'accept-language': 'zh-Hans-CN;q=1, en-CN;q=0.9',
-            'content-type': 'application/x-www-form-urlencoded;'
-        }
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }  # HTTP请求头 设置为 Json格式
+        try:  # 异常捕捉
+            res = requests.post(url=url, headers=headers, data=payload)  # 使用 requests模块进行 HTTP POST请求
+            if res.status_code == 200 and res.json()["code"] == 420:
+                url = ql_url + 'api/user/two-factor/login'
+                data = json.dumps({
+                    "username": username,
+                    "password": password,
+                    "code": twoCode
+                })
+                res = requests.put(url=url, headers=headers, data=data)
+                if res.status_code == 200 and res.json()["code"] == 200:
+                    token = res.json()["data"]['token']  # 从 res.text 返回值中 取出 Token值
+                    return token
+                else:
+                    logger.info("两步校验失败\n")  # 日志输出
+                    sys.exit(1)
+            elif res.status_code == 200 and res.json()["code"] == 200:
+                token = res.json()["data"]['token']  # 从 res.text 返回值中 取出 Token值
+                return token
+        except Exception as err:
+            logger.debug(str(err))  # Debug日志输出
+            sys.exit(1)
+    else:
+        url = ql_url + 'api/user/login'
+        payload = {
+            'username': username,
+            'password': password
+        }  # HTTP请求载荷
+        payload = json.dumps(payload)  # json格式化载荷
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }  # HTTP请求头 设置为 Json格式
+        try:  # 异常捕捉
+            res = requests.post(url=url, headers=headers, data=payload)  # 使用 requests模块进行 HTTP POST请求
+            if res.status_code == 200 and res.json()["code"] == 200:
+                token = res.json()["data"]['token']  # 从 res.text 返回值中 取出 Token值
+                return token
+            else:
+                ql_send("青龙登录失败!")
+                sys.exit(1)  # 脚本退出
+        except Exception as err:
+            logger.debug(str(err))  # Debug日志输出
+            logger.info("使用旧版青龙登录接口")
+            url = ql_url + 'api/login'  # 设置青龙地址 使用 format格式化自定义端口
+            payload = {
+                'username': username,
+                'password': password
+            }  # HTTP请求载荷
+            payload = json.dumps(payload)  # json格式化载荷
+            headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }  # HTTP请求头 设置为 Json格式
+            try:  # 异常捕捉
+                res = requests.post(url=url, headers=headers, data=payload)  # 使用 requests模块进行 HTTP POST请求
+                token = json.loads(res.text)["data"]['token']  # 从 res.text 返回值中 取出 Token值
+            except Exception as err:  # 异常捕捉
+                logger.debug(str(err))  # Debug日志输出
+                logger.info("青龙登录失败, 请检查面板状态!")  # 标准日志输出
+                ql_send('青龙登陆失败, 请检查面板状态.')
+                sys.exit(1)  # 脚本退出
+            else:  # 无异常执行分支
+                return token  # 返回 token值
+        # else:  # 无异常执行分支
+        #     return token  # 返回 token值
+
+
+# 返回值 Token
+def ql_login():  # 方法 青龙登录(获取Token 功能同上)
+    path = '/ql/config/auth.json'  # 设置青龙 auth文件地址
+    if not os.path.isfile(path):
+        path = '/ql/data/config/auth.json'  # 尝试设置青龙 auth 新版文件地址
+    if os.path.isfile(path):  # 进行文件真值判断
+        with open(path, "r") as file:  # 上下文管理
+            auth = file.read()  # 读取文件
+            file.close()  # 关闭文件
+        auth = json.loads(auth)  # 使用 json模块读取
+        username = auth["username"]  # 提取 username
+        password = auth["password"]  # 提取 password
+        token = auth["token"]  # 提取 authkey
         try:
-            token = post(url=url, headers=headers, data=body, verify=False, proxies={"http": proxys, "https": proxys}).json()
-            token=token['tokenKey']
-        except Exception as error:
-            print(f"【警告】{unquote(pin)}在获取token时失败，等待5秒后重试")
-            time.sleep(5)
-            if num == 4:
-                print(f"【错误】{unquote(pin)}在获取token时：\n{error}")
-                return pin, "False"
-            randomuserAgent()
-            if os.environ.get("WSKEY_PROXY_URL") is not None:
-                proxys = get_proxy_api(proxy_url)
-            continue
+            twoFactorSecret = auth["twoFactorSecret"]
+        except Exception as err:
+            logger.debug(str(err))  # Debug日志输出
+            twoFactorSecret = ''
+        if token == '':  # 判断 Token是否为空
+            return get_qltoken(username, password, twoFactorSecret)  # 调用方法 get_qltoken 传递 username & password
+        else:  # 判断分支
+            url = ql_url + 'api/user'  # 设置URL请求地址 使用 Format格式化端口
+            headers = {
+                'Authorization': 'Bearer {0}'.format(token),
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.71 Safari/537.36 Edg/94.0.992.38'
+            }  # 设置用于 HTTP头
+            res = requests.get(url=url, headers=headers)  # 调用 request模块发送 get请求
+            if res.status_code == 200:  # 判断 HTTP返回状态码
+                return token  # 有效 返回 token
+            else:  # 判断分支
+                return get_qltoken(username, password, twoFactorSecret)  # 调用方法 get_qltoken 传递 username & password
+    else:  # 判断分支
+        logger.info("没有发现auth文件, 你这是青龙吗???")  # 输出标准日志
+        sys.exit(0)  # 脚本退出
 
-        if token!="xxx":
-            break
-        else:
-            printf(f"【警告】{unquote(pin)}在获取token时失败，等待5秒后重试")
-            time.sleep(5)
-            randomuserAgent()
-            if os.environ.get("WSKEY_PROXY_URL") is not None:
-                proxys = get_proxy_api(proxy_url)
-            
-    if token=="xxx":
-        printf(f"【错误】{unquote(pin)}在获取token时失败，跳过")
-        return "Error"
 
-    for num in range(0, 5):
-        url = 'https://un.m.jd.com/cgi-bin/app/appjmp'
-        params = {
-            'tokenKey': token,
-            'to': 'https://plogin.m.jd.com/cgi-bin/m/thirdapp_auth_page',
-            'client_type': 'android',
-            'appid': 879,
-            'appup_type': 1,
-        }
-        try:
-            res = get(url=url, params=params, verify=False,
-                      allow_redirects=False, proxies={"http": proxys, "https": proxys}).cookies.get_dict()        
-        except Exception as error:
-            print(f"【警告】{unquote(pin)}在获取cookie时失败，等待5秒后重试")
-            time.sleep(5)
-            if num == 4:
-                # 最后一次重试时输出错误消息并返回 "Error"
-                print(f"【错误】{unquote(pin)}在获取cookie时：\n{error}")
-                return "Error"
-            randomuserAgent()
-            if os.environ.get("WSKEY_PROXY_URL") is not None:
-                proxys = get_proxy_api(proxy_url)
-            continue
-        
-    try:
-        if "app_open" in res['pt_key']:
-            cookie = f"pt_key={res['pt_key']};pt_pin={res['pt_pin']};"
-            return cookie
-        else:        
-            return ("Error:"+str(res))
-    except Exception as error:
-        printf(f"【错误】{unquote(pin)}在获取cookie时：\n{str(res)}")
-        return "Error"
+# 返回值 list[wskey]
+def get_wskey():  # 方法 获取 wskey值 [系统变量传递]
+    if "JD_WSCK" in os.environ:  # 判断 JD_WSCK是否存在于环境变量
+        wskey_list = os.environ['JD_WSCK'].split('&')  # 读取系统变量 以 & 分割变量
+        if len(wskey_list) > 0:  # 判断 WSKEY 数量 大于 0 个
+            return wskey_list  # 返回 WSKEY [LIST]
+        else:  # 判断分支
+            logger.info("JD_WSCK变量未启用")  # 标准日志输出
+            sys.exit(1)  # 脚本退出
+    else:  # 判断分支
+        logger.info("未添加JD_WSCK变量")  # 标准日志输出
+        sys.exit(0)  # 脚本退出
 
-def arcadia_getwskey():
-    possible_paths = ['/arcadia/config/account.json', '/jd/config/account.json']
 
-    for wskey_file in possible_paths:
-        if os.path.isfile(wskey_file):
-            with open(wskey_file, 'r') as f:
-                data = json.load(f)
+# 返回值 list[jd_cookie]
+def get_ck():  # 方法 获取 JD_COOKIE值 [系统变量传递] <! 此方法未使用 !>
+    if "JD_COOKIE" in os.environ:  # 判断 JD_COOKIE是否存在于环境变量
+        ck_list = os.environ['JD_COOKIE'].split('&')  # 读取系统变量 以 & 分割变量
+        if len(ck_list) > 0:  # 判断 WSKEY 数量 大于 0 个
+            return ck_list  # 返回 JD_COOKIE [LIST]
+        else:  # 判断分支
+            logger.info("JD_COOKIE变量未启用")  # 标准日志输出
+            sys.exit(1)  # 脚本退出
+    else:  # 判断分支
+        logger.info("未添加JD_COOKIE变量")  # 标准日志输出
+        sys.exit(0)  # 脚本退出
 
-            json_data = []
-            for item in data:
-                # 跳过空的 pt_pin 或 ws_key
-                if not item['pt_pin'] or not item['ws_key']:
-                    continue
-                pt_pin = item['pt_pin']
-                ws_key = item['ws_key']
-                remarks = item['remarks'][0] if item['remarks'] else ''
-                json_item = f"pin={pt_pin};wskey={ws_key};"
-                json_data.append((json_item, remarks))
-            return json_data
-    return []
 
-def arcadia_subcookie(cookie, token):
-    url = 'http://127.0.0.1:5678/openApi/updateCookie'
-    headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ', 'api-token': f'{token}'} 
+# 返回值 bool
+def check_ck(ck):  # 方法 检查 Cookie有效性 使用变量传递 单次调用
+    searchObj = re.search(r'pt_pin=([^;\s]+)', ck, re.M | re.I)  # 正则检索 pt_pin
+    if searchObj:  # 真值判断
+        pin = searchObj.group(1)  # 取值
+    else:  # 判断分支
+        pin = ck.split(";")[1]  # 取值 使用 ; 分割
+    if "WSKEY_UPDATE_HOUR" in os.environ:  # 判断 WSKEY_UPDATE_HOUR是否存在于环境变量
+        updateHour = 23  # 更新间隔23小时
+        if os.environ["WSKEY_UPDATE_HOUR"].isdigit():  # 检查是否为 DEC值
+            updateHour = int(os.environ["WSKEY_UPDATE_HOUR"])  # 使用 int化数字
+        nowTime = time.time()  # 获取时间戳 赋值
+        updatedAt = 0.0  # 赋值
+        searchObj = re.search(r'__time=([^;\s]+)', ck, re.M | re.I)  # 正则检索 [__time=]
+        if searchObj:  # 真值判断
+            updatedAt = float(searchObj.group(1))  # 取值 [float]类型
+        if nowTime - updatedAt >= (updateHour * 60 * 60) - (10 * 60):  # 判断时间操作
+            logger.info(str(pin) + ";即将到期或已过期\n")  # 标准日志输出
+            return False  # 返回 Bool类型 False
+        else:  # 判断分支
+            remainingTime = (updateHour * 60 * 60) - (nowTime - updatedAt)  # 时间运算操作
+            hour = int(remainingTime / 60 / 60)  # 时间运算操作 [int]
+            minute = int((remainingTime % 3600) / 60)  # 时间运算操作 [int]
+            logger.info(str(pin) + ";未到期，{0}时{1}分后更新\n".format(hour, minute))  # 标准日志输出
+            return True  # 返回 Bool类型 True
+    elif "WSKEY_DISCHECK" in os.environ:  # 判断分支 WSKEY_DISCHECK 是否存在于系统变量
+        logger.info("不检查账号有效性\n--------------------\n")  # 标准日志输出
+        return False  # 返回 Bool类型 False
+    else:  # 判断分支
+        url = 'https://me-api.jd.com/user_new/info/GetJDUserInfoUnion'  # 设置JD_API接口地址
+        headers = {
+            'Cookie': ck,
+            'Referer': 'https://home.m.jd.com/myJd/home.action',
+            'user-agent': ua
+        }  # 设置 HTTP头
+        try:  # 异常捕捉
+            res = requests.get(url=url, headers=headers, verify=False, timeout=10, allow_redirects=False)  # 进行 HTTP请求[GET] 超时 10秒
+        except Exception as err:  # 异常捕捉
+            logger.debug(str(err))  # 调试日志输出
+            logger.info("JD接口错误 请重试或者更换IP")  # 标准日志输出
+            return False  # 返回 Bool类型 False
+        else:  # 判断分支
+            if res.status_code == 200:  # 判断 JD_API 接口是否为 200 [HTTP_OK]
+                code = int(json.loads(res.text)['retcode'])  # 使用 Json模块对返回数据取值 int([retcode])
+                if code == 0:  # 判断 code值
+                    logger.info(str(pin) + ";状态正常\n")  # 标准日志输出
+                    return True  # 返回 Bool类型 True
+                else:  # 判断分支
+                    logger.info(str(pin) + ";状态失效\n")
+                    return False  # 返回 Bool类型 False
+            else:  # 判断分支
+                logger.info("JD接口错误码: " + str(res.status_code))  # 标注日志输出
+                return False  # 返回 Bool类型 False
+
+
+# 返回值 bool jd_ck
+def getTokenx(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返回 这里传递 wskey
+    if flag == 'bak':
+        return getToken_bak(wskey) 
+    try:  # 异常捕捉
+        url = str(base64.b64decode(url_t).decode()) + 'api/genToken'  # 设置云端服务器地址 路由为 genToken
+        header = {"User-Agent": ua}  # 设置 HTTP头
+        params = requests.get(url=url, headers=header, verify=False, timeout=20).json()  # 设置 HTTP请求参数 超时 20秒 Json解析
+    except Exception as err:  # 异常捕捉
+        logger.info("Params参数获取失败")  # 标准日志输出
+        logger.debug(str(err))  # 调试日志输出
+        return False, wskey  # 返回 -> False[Bool], Wskey
+    headers = {
+        'cookie': wskey,
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'charset': 'UTF-8',
+        'accept-encoding': 'br,gzip,deflate',
+        'user-agent': ua
+    }  # 设置 HTTP头
+    url = 'https://api.m.jd.com/client.action'  # 设置 URL地址
+    data = 'body=%7B%22to%22%3A%22https%253a%252f%252fplogin.m.jd.com%252fjd-mlogin%252fstatic%252fhtml%252fappjmp_blank.html%22%7D&'  # 设置 POST 载荷
+    try:  # 异常捕捉
+        res = requests.post(url=url, params=params, headers=headers, data=data, verify=False,
+                            timeout=10)  # HTTP请求 [POST] 超时 10秒
+        res_json = json.loads(res.text)  # Json模块 取值
+        tokenKey = res_json['tokenKey']  # 取出TokenKey
+    except Exception as err:  # 异常捕捉
+        logger.info("JD_WSKEY接口抛出错误 尝试重试 更换IP")  # 标准日志输出
+        logger.info(str(err))  # 标注日志输出
+        return False, wskey  # 返回 -> False[Bool], Wskey
+    else:  # 判断分支
+        return appjmp(wskey, tokenKey)  # 传递 wskey, Tokenkey 执行方法 [appjmp]
+
+# 备用
+def getToken(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返回 这里传递 wskey
+    try:  # 异常捕捉
+        url = str(base64.b64decode('aHR0cHM6Ly9hcGkubm9sYW5zdG9yZS5jYy8=').decode()) + 'sign'  # 设置云端服务器地址 路由为 genToken
+        header = {"Content-Type": "application/json"}  # 设置 HTTP头
+        data = {'body':{"to":"https%3a%2f%2fplogin.m.jd.com%2fjd-mlogin%2fstatic%2fhtml%2fappjmp_blank.html"},'fn':'genToken'}
+        params = requests.post(url=url, headers=header, json=data, verify=False, timeout=20).json()  # 设置 HTTP请求参数 超时 20秒 Json解析
+        params = 'functionId=genToken&'+params['body']
+    except Exception as err:  # 异常捕捉
+        logger.info("Params参数获取失败")  # 标准日志输出
+        logger.debug(str(err))  # 调试日志输出
+        return False, wskey  # 返回 -> False[Bool], Wskey
+    headers = {
+        'cookie': wskey,
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'charset': 'UTF-8',
+        'accept-encoding': 'br,gzip,deflate',
+        'user-agent': ua
+    }  # 设置 HTTP头
+    url = 'https://api.m.jd.com/client.action'  # 设置 URL地址
+    data = 'body=%7B%22to%22%3A%22https%253a%252f%252fplogin.m.jd.com%252fjd-mlogin%252fstatic%252fhtml%252fappjmp_blank.html%22%7D&'  # 设置 POST 载荷
+    try:  # 异常捕捉
+        res = requests.post(url=url, params=params, headers=headers, data=data, verify=False,
+                            timeout=10)  # HTTP请求 [POST] 超时 10秒
+        res_json = json.loads(res.text)  # Json模块 取值
+        tokenKey = res_json['tokenKey']  # 取出TokenKey
+    except Exception as err:  # 异常捕捉
+        logger.info("JD_WSKEY接口抛出错误 尝试重试 更换IP")  # 标准日志输出
+        logger.info(str(err))  # 标注日志输出
+        return False, wskey  # 返回 -> False[Bool], Wskey
+    else:  # 判断分支
+        return appjmp(wskey, tokenKey)  # 传递 wskey, Tokenkey 执行方法 [appjmp]
+
+# 返回值 bool jd_ck
+def appjmp(wskey, tokenKey):  # 方法 传递 wskey & tokenKey
+    wskey = "pt_" + str(wskey.split(";")[0])  # 变量组合 使用 ; 分割变量 拼接 pt_
+    if tokenKey == 'xxx':  # 判断 tokenKey返回值
+        logger.info(str(wskey) + ";疑似IP风控等问题 默认为失效\n--------------------\n")  # 标准日志输出
+        return False, wskey  # 返回 -> False[Bool], Wskey
+    headers = {
+        'User-Agent': ua,
+        'accept': 'accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'x-requested-with': 'com.jingdong.app.mall'
+    }  # 设置 HTTP头
+    params = {
+        'tokenKey': tokenKey,
+        'to': 'https://plogin.m.jd.com/jd-mlogin/static/html/appjmp_blank.html'
+    }  # 设置 HTTP_URL 参数
+    url = 'https://un.m.jd.com/cgi-bin/app/appjmp'  # 设置 URL地址
+    try:  # 异常捕捉
+        res = requests.get(url=url, headers=headers, params=params, verify=False, allow_redirects=False,
+                           timeout=20)  # HTTP请求 [GET] 阻止跳转 超时 20秒
+    except Exception as err:  # 异常捕捉
+        logger.info("JD_appjmp 接口错误 请重试或者更换IP\n")  # 标准日志输出
+        logger.info(str(err))  # 标准日志输出
+        return False, wskey  # 返回 -> False[Bool], Wskey
+    else:  # 判断分支
+        try:  # 异常捕捉
+            res_set = res.cookies.get_dict()  # 从res cookie取出
+            pt_key = 'pt_key=' + res_set['pt_key']  # 取值 [pt_key]
+            pt_pin = 'pt_pin=' + res_set['pt_pin']  # 取值 [pt_pin]
+            if "WSKEY_UPDATE_HOUR" in os.environ:  # 判断是否在系统变量中启用 WSKEY_UPDATE_HOUR
+                jd_ck = str(pt_key) + ';' + str(pt_pin) + ';__time=' + str(time.time()) + ';'  # 拼接变量
+            else:  # 判断分支
+                jd_ck = str(pt_key) + ';' + str(pt_pin) + ';'  # 拼接变量
+        except Exception as err:  # 异常捕捉
+            logger.info("JD_appjmp提取Cookie错误 请重试或者更换IP\n")  # 标准日志输出
+            logger.info(str(err))  # 标准日志输出
+            return False, wskey  # 返回 -> False[Bool], Wskey
+        else:  # 判断分支
+            if 'fake' in pt_key:  # 判断 pt_key中 是否存在fake
+                logger.info(str(wskey) + ";WsKey状态失效\n")  # 标准日志输出
+                return False, wskey  # 返回 -> False[Bool], Wskey
+            else:  # 判断分支
+                logger.info(str(wskey) + ";WsKey状态正常\n")  # 标准日志输出
+                return True, jd_ck  # 返回 -> True[Bool], jd_ck
+
+
+def update():  # 方法 脚本更新模块
+    up_ver = int(cloud_arg['update'])  # 云端参数取值 [int]
+    if ver >= up_ver:  # 判断版本号大小
+        logger.info("当前脚本版本: " + str(ver))  # 标准日志输出
+        logger.info("--------------------\n")  # 标准日志输出
+    else:  # 判断分支
+        logger.info("当前脚本版本: " + str(ver) + "新版本: " + str(up_ver))  # 标准日志输出
+        logger.info("存在新版本, 请更新脚本后执行")  # 标准日志输出
+        logger.info("--------------------\n")  # 标准日志输出
+        text = '当前脚本版本: {0}新版本: {1}, 请更新脚本~!'.format(ver, up_ver)  # 设置发送内容
+        ql_send(text)
+        # sys.exit(0)  # 退出脚本 [未启用]
+
+
+def ql_check(port):  # 方法 检查青龙端口
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Socket模块初始化
+    sock.settimeout(2)  # 设置端口超时
+    try:  # 异常捕捉
+        sock.connect(('127.0.0.1', port))  # 请求端口
+    except Exception as err:  # 捕捉异常
+        logger.debug(str(err))  # 调试日志输出
+        sock.close()  # 端口关闭
+        return False  # 返回 -> False[Bool]
+    else:  # 分支判断
+        sock.close()  # 关闭端口
+        return True  # 返回 -> True[Bool]
+
+
+def serch_ck(pin):  # 方法 搜索 Pin
+    for i in range(len(envlist)):  # For循环 变量[envlist]的数量
+        if "name" not in envlist[i] or envlist[i]["name"] != "JD_COOKIE":  # 判断 envlist内容
+            continue  # 继续循环
+        if pin in envlist[i]['value']:  # 判断envlist取值['value']
+            value = envlist[i]['value']  # 取值['value']
+            id = envlist[i][ql_id]  # 取值 [ql_id](变量)
+            logger.info(str(pin) + "检索成功\n")  # 标准日志输出
+            return True, value, id  # 返回 -> True[Bool], value, id
+        else:  # 判断分支
+            continue  # 继续循环
+    logger.info(str(pin) + "检索失败\n")  # 标准日志输出
+    return False, 1  # 返回 -> False[Bool], 1
+
+
+def get_env():  # 方法 读取变量
+    url = ql_url + 'api/envs'
+    try:  # 异常捕捉
+        res = s.get(url)  # HTTP请求 [GET] 使用 session
+    except Exception as err:  # 异常捕捉
+        logger.debug(str(err))  # 调试日志输出
+        logger.info("\n青龙环境接口错误")  # 标准日志输出
+        sys.exit(1)  # 脚本退出
+    else:  # 判断分支
+        data = json.loads(res.text)['data']  # 使用Json模块提取值[data]
+        return data  # 返回 -> data
+
+
+def check_id():  # 方法 兼容青龙老版本与新版本 id & _id的问题
+    url = ql_url + 'api/envs'
+    try:  # 异常捕捉
+        res = s.get(url).json()  # HTTP[GET] 请求 使用 session
+    except Exception as err:  # 异常捕捉
+        logger.debug(str(err))  # 调试日志输出
+        logger.info("\n青龙环境接口错误")  # 标准日志输出
+        sys.exit(1)  # 脚本退出
+    else:  # 判断分支
+        if '_id' in res['data'][0]:  # 判断 [_id]
+            logger.info("使用 _id 键值")  # 标准日志输出
+            return '_id'  # 返回 -> '_id'
+        else:  # 判断分支
+            logger.info("使用 id 键值")  # 标准日志输出
+            return 'id'  # 返回 -> 'id'
+
+
+def ql_update(e_id, n_ck):  # 方法 青龙更新变量 传递 id cookie
+    url = ql_url + 'api/envs'
     data = {
-        "cookie": cookie
-    }    
-    res = post(url, data=json.dumps(data), headers=headers).json()
-    return res
-
-def subcookie(pt_pin, cookie, token):
-    if True:
-        reamrk=""
-        if token!="":
-            strptpin=pt_pin
-            if re.search('%', strptpin):
-                strptpin = unquote(strptpin, 'utf-8')
-            url = 'http://127.0.0.1:5600/api/envs'
-            headers = {'Authorization': f'Bearer {token}'}
-            body = {
-                'searchValue': pt_pin,
-                'Authorization': f'Bearer {token}'
-            }
-            datas = get(url, params=body, headers=headers).json()['data']            
-            old = False
-            isline=True
-            for data in datas:
-                if "pt_key" in data['value']:
-                    try:
-                        body = {"name": "JD_COOKIE", "value": cookie, "_id": data['_id']}
-                    except:    
-                        body = {"name": "JD_COOKIE", "value": cookie, "id": data['id']}
-                        isline=False
-                    old = True
-                    try:
-                        reamrk=data['remarks']
-                    except:
-                        reamrk=""
-
-                    if reamrk!="" and not reamrk is None:
-                        strptpin=strptpin+"("+reamrk.split("@@")[0]+")"
-                        
-            if old:
-                put(url, json=body, headers=headers)
-                url = 'http://127.0.0.1:5600/api/envs/enable'
-                if isline:
-                    body = [body['_id']]
-                else:
-                    body = [body['id']]
-                put(url, json=body, headers=headers)
-                printf(f"更新成功：{strptpin}")
-            else:
-                body = [{"value": cookie, "name": "JD_COOKIE"}]
-                post(url, json=body, headers=headers)
-                printf(f"新增成功：{strptpin}")
-
-def getRemark(pt_pin,token):    
-    reamrk=""
-    if re.search('%', pt_pin):
-        strreturn=unquote(pt_pin, 'utf-8')
-    else:
-        strreturn=pt_pin
-
-    if token!="":
-        url = 'http://127.0.0.1:5600/api/envs'
-        headers = {'Authorization': f'Bearer {token}'}
-        body = {
-            'searchValue': pt_pin,
-            'Authorization': f'Bearer {token}'
-        }
-        datas = get(url, params=body, headers=headers).json()['data']
-        for data in datas:
-            if "pt_key" in data['value']:
-                try:
-                    reamrk=data['remarks']
-                    break
-                except:
-                    pass
-        if not reamrk is None and reamrk!="":
-            strreturn=strreturn+"("+reamrk.split("@@")[0]+")"
-
-    return strreturn
-
-def main():
-    printf("版本: 20230602")
-    printf("说明: 如果用Wxpusher通知需配置WP_APP_TOKEN_ONE和WP_APP_MAIN_UID，其中WP_APP_MAIN_UID是你的Wxpusher UID")
-    printf("隧道型代理池接口:export WSKEY_PROXY_TUNNRL='http://127.0.0.1:123456'")
-    printf("拉取型代理API接口(数据格式:txt;提取数量:每次一个):export WSKEY_PROXY_URL='http://xxx.com/apiUrl'")
-    printf("没有代理可以自行注册，比如携趣，巨量，每日免费1000IP，完全够用")
-    printf("====================================")
-    config=""
-    envtype=""
-    global proxy_url
-    proxy_url=os.environ.get("WSKEY_PROXY_URL") or os.environ.get("WSKEY_PROXY_TUNNRL") or None
-    iswxpusher=False
-    counttime=0
-
-    if os.path.exists("/ql/config/auth.json"):
-        config="/ql/config/auth.json"
-        envtype="ql"
-    
-    if os.path.exists("/ql/data/config/auth.json"):
-        config="/ql/data/config/auth.json"
-        envtype="ql"
-
-    if os.path.exists("/jd/config/auth.json"):
-        config="/jd/config/auth.json"
-        envtype="arcadia"
+        "name": "JD_COOKIE",
+        "value": n_ck,
+        ql_id: e_id
+    }  # 设置 HTTP POST 载荷
+    data = json.dumps(data)  # json模块格式化
+    s.put(url=url, data=data)  # HTTP [PUT] 请求 使用 session
+    ql_enable(eid)  # 调用方法 ql_enable 传递 eid
 
 
-    if os.path.exists("/arcadia/config/auth.json"):
-        config="/arcadia/config/auth.json"
-        envtype="arcadia"
-        
-    if config=="":
-        printf(f"无法判断使用环境，退出脚本!")
-        return  
-    try:
-        if os.environ.get("WP_APP_TOKEN_ONE")==None or os.environ.get("WP_APP_MAIN_UID")==None:
-            printf('没有配置Wxpusher相关变量,将调用sendNotify.py发送通知')
-        else:
-            if os.environ.get("WP_APP_TOKEN_ONE")=="" or os.environ.get("WP_APP_MAIN_UID")=="":
-                printf('没有配置Wxpusher相关变量,将调用sendNotify.py发送通知')
-            else:
-                printf('检测到已配置Wxpusher相关变量,将使用Wxpusher发送通知')
-                iswxpusher=True
-    except:
-        iswxpusher=False
-                
-    if proxy_url is None:
-        print("没有配置代理，无法使用代理!\n请配置环境变量WSKEY_PROXY_TUNNRL或WSKEY_PROXY_URL\n")
-        print("====================================")
-    else:
-        print(f"已配置代理: {proxy_url}\n")
+def ql_enable(e_id):  # 方法 青龙变量启用 传递值 eid
+    url = ql_url + 'api/envs/enable'
+    data = '["{0}"]'.format(e_id)  # 格式化 POST 载荷
+    res = json.loads(s.put(url=url, data=data).text)  # json模块读取 HTTP[PUT] 的返回值
+    if res['code'] == 200:  # 判断返回值为 200
+        logger.info("\n账号启用\n--------------------\n")  # 标准日志输出
+        return True  # 返回 ->True
+    else:  # 判断分支
+        logger.info("\n账号启用失败\n--------------------\n")  # 标准日志输出
+        return False  # 返回 -> Fasle
 
-    resurt=""
-    resurt1=""
-    resurt2=""
-    summary=""
 
-    if envtype == "ql":
-        with open(config, "r", encoding="utf-8") as f1:
-            token = json.load(f1)['token']
-        url = 'http://127.0.0.1:5600/api/envs'
-        headers = {'Authorization': f'Bearer {token}'}
-        body = {
-            'searchValue': 'JD_WSCK',
-            'Authorization': f'Bearer {token}'
-        }
-        datas = get(url, params=body, headers=headers).json()['data']
-    elif envtype == "arcadia":
-        with open(config, "r", encoding="utf-8") as f1:
-            #token = json.load(f1)['token']
-            data = json.load(f1)
-            token = data.get('openApiToken', '')
-        url = 'http://127.0.0.1:5678/openApi/count'
-        headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ', 'api-token': f'{token}'} 
-        datas = get(url, headers=headers).json()["data"]["accountCount"]
-    
-    # printf(f"token：{token}")
-    # printf(f"datas：{datas}")
-        
+def ql_disable(e_id):  # 方法 青龙变量禁用 传递 eid
+    url = ql_url + 'api/envs/disable'
+    data = '["{0}"]'.format(e_id)  # 格式化 POST 载荷
+    res = json.loads(s.put(url=url, data=data).text)  # json模块读取 HTTP[PUT] 的返回值
+    if res['code'] == 200:  # 判断返回值为 200
+        logger.info("\n账号禁用成功\n--------------------\n")  # 标准日志输出
+        return True  # 返回 ->True
+    else:  # 判断分支
+        logger.info("\n账号禁用失败\n--------------------\n")  # 标准日志输出
+        return False  # 返回 -> Fasle
 
-    if datas > 0 if isinstance(datas, int) else len(datas) > 0:
-        printf("\n===============开始转换JD_WSCK==============")
-    else:
-        printf("\n错误:没有需要转换的JD_WSCK，退出脚本!")
-        return
 
-    if envtype == "ql":
-        for data in datas:
-            randomuserAgent()
-            if data['status']!=0:
-                continue
-            key = data['value']
-            pin = re.findall(r'(pin=([^; ]+)(?=;?))',key)[0][1]        
-            cookie = getcookie_wskey(key)
-            if "app_open" in cookie:
-                #printf("转换成功:"cookie)     
-                orgpin = cookie.split(";")[1].split("=")[1]            
-                subcookie(orgpin, cookie, token)
-                newpin=getRemark(orgpin,token)
-                resurt1=resurt1+f"转换成功：{newpin}\n"
-            else:
-                newpin=getRemark(pin,token)
-                if "fake_" in cookie:
-                    message = f"pin为{newpin}的wskey过期了！"
-                    printf(message)
-                    url = 'http://127.0.0.1:5600/api/envs/disable'
-                    try:
-                        body = [data['_id']]
-                    except:   
-                        body = [data['id']]
-                    put(url, json=body, headers=headers)                
-                    printf(f"禁用成功:{newpin}")
-                    resurt2=resurt2+f"wskey已禁用:{newpin}\n"
-                else:
-                    message = f"转换失败:{newpin}"
-                    resurt2=resurt2+f"转换失败:{newpin}\n"
+def ql_insert(i_ck):  # 方法 插入新变量
+    data = [{"value": i_ck, "name": "JD_COOKIE"}]  # POST数据载荷组合
+    data = json.dumps(data)  # Json格式化数据
+    url = ql_url + 'api/envs'
+    s.post(url=url, data=data)  # HTTP[POST]请求 使用session
+    logger.info("\n账号添加完成\n--------------------\n")  # 标准日志输出
 
-    elif envtype == "arcadia":
-        wslist = arcadia_getwskey()
-        #printf(f"wslist:\n{wslist}")
-        for ws,remark in wslist:
-            randomuserAgent()
-            pin = re.findall(r'(pin=([^; ]+)(?=;?))',ws)[0][1]
-            printf(f"当前转换的pin:\n{pin}")
-            cookie = getcookie_wskey(ws)
-            printf(f"转换后的cookie:\n{cookie}\n")
 
-            if "app_open" in cookie:
-                #printf("转换成功:"cookie)     
-                res = arcadia_subcookie(cookie, token)
-                resurt1=resurt1+f"转换成功：{remark}@{pin}"
-                if res["code"] == 1:
-                    resurt1=resurt1+f"，面板同步成功！ ✅\n"
-                else:
-                    resurt1=resurt1+f"，面板同步失败，token错误或者请求失败。 ❌\n"
-            else:
-                if "fake_" in cookie:
-                    message = f"{remark}@{pin}，wskeyk可能过期了！ ❌\n"
-                    printf(message)
-                    resurt2=resurt2+f"{remark}@{pin}，wskeyk可能过期了！ ❌\n"
-                else:
-                    message = f"{remark}@{pin}，转换失败！ ❌"
-                    printf(message)
-                    resurt2=resurt2+f"{remark}@{pin}，转换失败！ ❌\n"
+def cloud_info():  # 方法 云端信息
+    url = str(base64.b64decode(url_t).decode()) + 'api/check_api'  # 设置 URL地址 路由 [check_api]
+    for i in range(3):  # For循环 3次
+        try:  # 异常捕捉
+            headers = {"authorization": "Bearer Shizuku"}  # 设置 HTTP头
+            res = requests.get(url=url, verify=False, headers=headers, timeout=20).text  # HTTP[GET] 请求 超时 20秒
+        except requests.exceptions.ConnectTimeout:  # 异常捕捉
+            logger.info("\n获取云端参数超时, 正在重试!" + str(i))  # 标准日志输出
+            time.sleep(1)  # 休眠 1秒
+            continue  # 循环继续
+        except requests.exceptions.ReadTimeout:  # 异常捕捉
+            logger.info("\n获取云端参数超时, 正在重试!" + str(i))  # 标准日志输出
+            time.sleep(1)  # 休眠 1秒
+            continue  # 循环继续
+        except Exception as err:  # 异常捕捉
+            logger.info("\n未知错误云端, 退出脚本!")  # 标准日志输出
+            logger.debug(str(err))  # 调试日志输出
+            sys.exit(1)  # 脚本退出
+        else:  # 分支判断
+            try:  # 异常捕捉
+                c_info = json.loads(res)  # json读取参数
+            except Exception as err:  # 异常捕捉
+                logger.info("云端参数解析失败")  # 标准日志输出
+                logger.debug(str(err))  # 调试日志输出
+                sys.exit(1)  # 脚本退出
+            else:  # 分支判断
+                return c_info  # 返回 -> c_info
 
-               
-    if resurt2!="": 
-        resurt="👇👇👇👇👇转换异常👇👇👇👇👇\n"+resurt2+"\n"
-        summary="部分CK转换异常"
-        
-        if resurt1!="": 
-            resurt=resurt+"👇👇👇👇👇转换成功👇👇👇👇👇\n"+resurt1
-            if summary=="":
-                summary="全部转换成功"
-                
-        if iswxpusher:
-            send_notification("JD_WSCK转换结果",resurt,summary)
-        else:
-            if hadsend:
-                send("JD_WSCK转换结果",resurt)
-            else:
-                printf("没有启用通知!")
-    else:
-        if resurt1!="": 
-            resurt=resurt+"👇👇👇👇👇转换成功👇👇👇👇👇\n"+resurt1
 
-        if iswxpusher:
-            send_notification("JD_WSCK转换结果",resurt,summary)
-        else:
-            if hadsend:
-                send("JD_WSCK转换结果",resurt)
-            else:
-                printf("没有启用通知!")   
+def check_cloud():  # 方法 云端地址检查
+    url_list = ['aHR0cHM6Ly9hcGkubW9tb2UubWwv', 'aHR0cHM6Ly9hcGkubGltb2UuZXUub3JnLw==', 'aHR0cHM6Ly9hcGkuaWxpeWEuY2Yv']  # URL list Encode
+    for i in url_list:  # for循环 url_list
+        url = str(base64.b64decode(i).decode())  # 设置 url地址 [str]
+        try:  # 异常捕捉
+            requests.get(url=url, verify=False, timeout=10)  # HTTP[GET]请求 超时 10秒
+        except Exception as err:  # 异常捕捉
+            logger.debug(str(err))  # 调试日志输出
+            continue  # 循环继续
+        else:  # 分支判断
+            info = ['HTTPS', 'Eu_HTTPS', 'CloudFlare']  # 输出信息[List]
+            logger.info(str(info[url_list.index(i)]) + " Server Check OK\n--------------------\n")  # 标准日志输出
+            return i  # 返回 ->i
+    logger.info("\n云端地址全部失效, 请检查网络!")  # 标准日志输出
+    #ql_send('云端地址失效. 请联系作者或者检查网络.')  # 推送消息
+    return 403
+    #sys.exit(1)  # 脚本退出
 
-    printf("\n\n===============转换结果==============\n")
-    printf(resurt)
 
-if __name__ == '__main__':    
-    main()
+def check_port():  # 方法 检查变量传递端口
+    logger.info("\n--------------------\n")  # 标准日志输出
+    if "QL_PORT" in os.environ:  # 判断 系统变量是否存在[QL_PORT]
+        try:  # 异常捕捉
+            port = int(os.environ['QL_PORT'])  # 取值 [int]
+        except Exception as err:  # 异常捕捉
+            logger.debug(str(err))  # 调试日志输出
+            logger.info("变量格式有问题...\n格式: export QL_PORT=\"端口号\"")  # 标准日志输出
+            logger.info("使用默认端口5700")  # 标准日志输出
+            return 5700  # 返回端口 5700
+    else:  # 判断分支
+        port = 5700  # 默认5700端口
+    if not ql_check(port):  # 调用方法 [ql_check] 传递 [port]
+        logger.info(str(port) + "端口检查失败, 如果改过端口, 请在变量中声明端口 \n在config.sh中加入 export QL_PORT=\"端口号\"")  # 标准日志输出
+        logger.info("\n如果你很确定端口没错, 还是无法执行, 在GitHub给我发issus\n--------------------\n")  # 标准日志输出
+        sys.exit(1)  # 脚本退出
+    else:  # 判断分支
+        logger.info(str(port) + "端口检查通过")  # 标准日志输出
+        return port  # 返回->port
+
+
+if __name__ == '__main__':  # Python主函数执行入口
+    port = check_port()  # 调用方法 [check_port]  并赋值 [port]
+    ql_url = 'http://127.0.0.1:{0}/'.format(port)
+    token = ql_login()  # 调用方法 [ql_login]  并赋值 [token]
+    s = requests.session()  # 设置 request session方法
+    s.headers.update({"authorization": "Bearer " + str(token)})  # 增加 HTTP头认证
+    s.headers.update({"Content-Type": "application/json;charset=UTF-8"})  # 增加 HTTP头 json 类型
+    ql_id = check_id()  # 调用方法 [check_id] 并赋值 [ql_id]
+    #url_t = check_cloud()  # 调用方法 [check_cloud] 并赋值 [url_t]
+    #flag = ''
+    #if url_t == 403:
+    #    logger.info("\n尝试使用nolan接口请求\n")
+    #    ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
+    #    flag = 'bak'
+    #else:
+    #    cloud_arg = cloud_info()  # 调用方法 [cloud_info] 并赋值 [cloud_arg]
+    #    update()  # 调用方法 [update]    
+    #    ua = cloud_arg['User-Agent']  # 设置全局变量 UA
+    wslist = get_wskey()  # 调用方法 [get_wskey] 并赋值 [wslist]
+    envlist = get_env()  # 调用方法 [get_env] 并赋值 [envlist]
+    if "WSKEY_SLEEP" in os.environ and str(os.environ["WSKEY_SLEEP"]).isdigit():  # 判断变量[WSKEY_SLEEP]是否为数字类型
+        sleepTime = int(os.environ["WSKEY_SLEEP"])  # 获取变量 [int]
+    else:  # 判断分支
+        sleepTime = 10  # 默认休眠时间 10秒
+    for ws in wslist:  # wslist变量 for循环  [wslist -> ws]
+        ua = getua()
+        wspin = ws.split(";")[0]  # 变量分割 ;
+        if "pin" in wspin:  # 判断 pin 是否存在于 [wspin]
+            wspin = "pt_" + wspin + ";"  # 封闭变量
+            return_serch = serch_ck(wspin)  # 变量 pt_pin 搜索获取 key eid
+            if return_serch[0]:  # bool: True 搜索到账号
+                jck = str(return_serch[1])  # 拿到 JD_COOKIE
+                if not check_ck(jck):  # bool: False 判定 JD_COOKIE 有效性
+                    tryCount = 2  # 重试次数 2次
+                    if "WSKEY_TRY_COUNT" in os.environ:  # 判断 [WSKEY_TRY_COUNT] 是否存在于系统变量
+                        if os.environ["WSKEY_TRY_COUNT"].isdigit():  # 判断 [WSKEY_TRY_COUNT] 是否为数字
+                            tryCount = int(os.environ["WSKEY_TRY_COUNT"])  # 设置 [tryCount] int
+                    for count in range(tryCount):  # for循环 [tryCount]
+                        count += 1  # 自增
+                        return_ws = getToken(ws)  # 使用 WSKEY 请求获取 JD_COOKIE bool jd_ck
+                        if return_ws[0]:  # 判断 [return_ws]返回值 Bool类型
+                            break  # 中断循环
+                        if count < tryCount:  # 判断循环次
+                            logger.info("{0} 秒后重试，剩余次数：{1}\n".format(sleepTime, tryCount - count))  # 标准日志输出
+                            time.sleep(sleepTime)  # 脚本休眠 使用变量 [sleepTime]
+                    if return_ws[0]:  # 判断 [return_ws]返回值 Bool类型
+                        nt_key = str(return_ws[1])  # 从 return_ws[1] 取出 -> nt_key
+                        # logger.info("wskey转pt_key成功", nt_key)  # 标准日志输出 [未启用]
+                        logger.info("wskey转换成功")  # 标准日志输出
+                        eid = return_serch[2]  # 从 return_serch 拿到 eid
+                        ql_update(eid, nt_key)  # 函数 ql_update 参数 eid JD_COOKIE
+                    else:  # 判断分支
+                        if "WSKEY_AUTO_DISABLE" in os.environ:  # 从系统变量中获取 WSKEY_AUTO_DISABLE
+                            logger.info(str(wspin) + "账号失效")  # 标准日志输出
+                            text = "账号: {0} WsKey疑似失效".format(wspin)  # 设置推送内容
+                        else:  # 判断分支
+                            eid = return_serch[2]  # 读取 return_serch[2] -> eid
+                            logger.info(str(wspin) + "账号禁用")  # 标准日志输出
+                            ql_disable(eid)  # 执行方法[ql_disable] 传递 eid
+                            text = "账号: {0} WsKey疑似失效, 已禁用Cookie".format(wspin)  # 设置推送内容
+                            ql_send(text)
+                else:  # 判断分支
+                    logger.info(str(wspin) + "账号有效")  # 标准日志输出
+                    eid = return_serch[2]  # 读取 return_serch[2] -> eid
+                    ql_enable(eid)  # 执行方法[ql_enable] 传递 eid
+                    logger.info("--------------------\n")  # 标准日志输出
+            else:  # 判断分支
+                logger.info("\n新wskey\n")  # 标准日志分支
+                return_ws = getToken(ws)  # 使用 WSKEY 请求获取 JD_COOKIE bool jd_ck
+                if return_ws[0]:  # 判断 (return_ws[0]) 类型: [Bool]
+                    nt_key = str(return_ws[1])  # return_ws[1] -> nt_key
+                    logger.info("wskey转换成功\n")  # 标准日志输出
+                    ql_insert(nt_key)  # 调用方法 [ql_insert]
+            logger.info("暂停{0}秒\n".format(sleepTime))  # 标准日志输出
+            time.sleep(sleepTime)  # 脚本休眠
+        else:  # 判断分支
+            logger.info("WSKEY格式错误\n--------------------\n")  # 标准日志输出
+    logger.info("执行完成\n--------------------")  # 标准日志输出
+    sys.exit(0)  # 脚本退出
+    # Enjoy
