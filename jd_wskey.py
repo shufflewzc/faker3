@@ -354,7 +354,7 @@ def getTokenx(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返
 # 备用
 def getToken(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返回 这里传递 wskey
     try:  # 异常捕捉
-        url = str(base64.b64decode('aHR0cHM6Ly9hcGkubm9sYW5zdG9yZS5jYy8=').decode()) + 'sign'  # 设置云端服务器地址 路由为 genToken
+        url = str(base64.b64decode('aHR0cHM6Ly82ZHkubmJwbGF5LnNpdGUv').decode()) + 'sign'  # 设置云端服务器地址 路由为 genToken
         header = {"Content-Type": "application/json"}  # 设置 HTTP头
         data = {'body':{"to":"https%3a%2f%2fplogin.m.jd.com%2fjd-mlogin%2fstatic%2fhtml%2fappjmp_blank.html"},'fn':'genToken'}
         params = requests.post(url=url, headers=header, json=data, verify=False, timeout=20).json()  # 设置 HTTP请求参数 超时 20秒 Json解析
@@ -640,7 +640,7 @@ if __name__ == '__main__':  # Python主函数执行入口
     else:  # 判断分支
         sleepTime = 10  # 默认休眠时间 10秒
     for ws in wslist:  # wslist变量 for循环  [wslist -> ws]
-        ua = getua()
+        ua = 'okhttp/3.12.16;jdmall;android;version/12.1.0;build/98891;'
         wspin = ws.split(";")[0]  # 变量分割 ;
         if "pin" in wspin:  # 判断 pin 是否存在于 [wspin]
             wspin = "pt_" + wspin + ";"  # 封闭变量
