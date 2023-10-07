@@ -5,6 +5,12 @@
 		jd_lzkj_loreal_dailyGrabs_opencard // 是否入会（true/false），默认不入会
         jd_lzkj_loreal_dailyGrabs_Notify // 是否推送通知（true/false），默认不推送
 		jd_lzkj_loreal_dailyGrabs_break // 493后继续执行，默认退出运行（true/false）
+		
+cron:1 1 1 1 *
+============Quantumultx===============
+[task_local]
+#每日抢好礼（超级无线）
+1 1 1 1 * jd_lzkj_loreal_dailyGrabs.js, tag=每日抢好礼（超级无线）, enabled=true
 
 */
 

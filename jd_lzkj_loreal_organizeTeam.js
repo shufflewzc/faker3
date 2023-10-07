@@ -5,6 +5,12 @@
 		jd_lzkj_loreal_organizeTeam_opencard // 是否入会（true/false），默认不入会
         jd_lzkj_loreal_organizeTeam_Notify // 是否推送通知（true/false），默认不推送
 		jd_lzkj_loreal_organizeTeam_break // 493后继续执行，默认退出运行（true/false）
+		
+cron:1 1 1 1 *
+============Quantumultx===============
+[task_local]
+#组队瓜分奖品（超级无线）
+1 1 1 1 * jd_lzkj_loreal_organizeTeam.js, tag=组队瓜分奖品（超级无线）, enabled=true		
 
 */
 
