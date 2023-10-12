@@ -405,7 +405,7 @@ def getToken(wskey):  # 方法 获取 Wskey转换使用的 Token 由 JD_API 返�
     try:  # 异常捕捉
         # 设置云端服务器地址 路由为 genToken
         url = str(base64.b64decode(
-            'aHR0cHM6Ly82ZHkubmJwbGF5LnNpdGUv').decode()) + 'sign'
+            'aHR0cHM6Ly82ZHkuamRwcm8uc2l0ZS8=').decode()) + 'sign'
         header = {"Content-Type": "application/json"}  # 设置 HTTP头
         data = {'body': {
             "to": "https%3a%2f%2fplogin.m.jd.com%2fjd-mlogin%2fstatic%2fhtml%2fappjmp_blank.html"}, 'fn': 'genToken'}
