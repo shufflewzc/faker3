@@ -30,7 +30,7 @@ Faker3 纯净版
 ql repo https://git.metauniverse-cn.com/https://github.com/shufflewzc/faker3.git "jd_|jx_|gua_|jddj_|jdCookie" "activity|backUp" "^jd[^_]|USER|function|utils|sendNotify|ZooFaker_Necklace.js|JDJRValidator_|sign_graphics_validate|ql|JDSignValidator|magic|depend|h5sts" "main"
 
 【教程合集】
-[https://www.notion.so/Cent-OS-7-6-1c598629675145988b43a37998a1604a]()
+[https://www.notion.so/Cent-OS-7-6-1c598629675145988b43a37998a1604a](https://www.notion.so/Cent-OS-7-6-1c598629675145988b43a37998a1604a)
 
 
 ## Special statement:
