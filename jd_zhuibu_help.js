@@ -1,6 +1,8 @@
 /*
 JOY全国追补记
 
+链接：https://pro.m.jd.com/mall/active/h7bbR7sFxP6thFYwDqxNWjAbh8K/index.html
+
 环境变量：
 JD_zhuibu_InviterId // 指定助力码 非必须，不填默认助力账号一
 JD_zhuibu_NUM // 指定人数  非必须，不填默认跑全部账号

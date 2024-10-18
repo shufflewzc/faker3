@@ -1,5 +1,7 @@
 /*
-JOY全国追补记抽奖提现
+JOY全国追补记
+
+链接：https://pro.m.jd.com/mall/active/h7bbR7sFxP6thFYwDqxNWjAbh8K/index.html
 
 轮询提现变量：JD_zhuibu_TXNUM //轮询提现页数
 
