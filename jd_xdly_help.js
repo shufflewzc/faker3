@@ -6,7 +6,7 @@
 jd_xdly_inviterId // 指定助力码 非必须，不填默认助力账号一
 jd_xdly_num // 指定人数  非必须，不填默认跑全部账号
 
-cron: 0 0,12 * * * jd_xdly_help1.js
+cron: 1 0,12 * * * jd_xdly_help.js
 
 */
 
