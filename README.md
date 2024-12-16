@@ -3,17 +3,17 @@
 
 Faker自用仓库。本地秘钥计算方法，保证账户信息安全。已适配Spy插件24小时全天监控。
 
-* 推荐配合spy使用
+* 推荐配合无界使用
 * 自有拉库代理
 * 每日保持更新
 
 ### 注意
-由于现在青龙版本更新迭代快，但青龙插件适配速度慢，为了可以完美使用本库，请使用一键安装脚本安装2.11.3版青龙。
+为了可以完美使用本库，请使用一键安装脚本安装青龙，请按照教程链接进行配置。
 
 【一键脚本】
 https://thin-hill-428.notion.site/Faker-QL-pannel-Faker-Repository-environment-Setup-45edcbfe90d74d8abb2d71896eab3be7
 
-##  纯净版
+##  内部助力版
 
 无任何自带助力码。
 
@@ -25,7 +25,7 @@ https://thin-hill-428.notion.site/Faker-QL-pannel-Faker-Repository-environment-S
 
 【注意】拉库前请打开青龙面板-配置文件 第18行 GithubProxyUrl="" 双引号中的内容去掉。
 
-Faker3 纯净版
+Faker3 内部助力版
 
 ql repo https://git.metauniverse-cn.com/https://github.com/shufflewzc/faker3.git "jd_|jx_|gua_|jddj_|jdCookie" "activity|backUp" "^jd[^_]|USER|function|utils|sendNotify|ZooFaker_Necklace.js|JDJRValidator_|sign_graphics_validate|ql|JDSignValidator|magic|depend|h5sts" "main"
 
