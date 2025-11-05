@@ -665,6 +665,8 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By ht
 
         if (process.env['FS_KEY' + UseGroupNotify] && Use_fsBotNotify) {
             FS_KEY = process.env['FS_KEY' + UseGroupNotify]
+        } else if (process.env['FSKEY' + UseGroupNotify] && Use_fsBotNotify) {
+            FS_KEY = process.env['FSKEY' + UseGroupNotify]
         }
 
         if (process.env['IGOT_PUSH_KEY' + UseGroupNotify] && Use_iGotNotify) {
@@ -1522,11 +1524,13 @@ function fsBotNotify(text, desp) {
                         console.log('飞书发送通知消息失败！！\n')
                         console.log(err)
                     } else {
+                        // {"StatusCode":0,"StatusMessage":"success","code":0,"data":{},"msg":"success"}
                         data = JSON.parse(data)
-                        if (data.errcode === 0) {
+                        if (data.code === 0) {
                             console.log('飞书发送通知消息成功🎉。\n')
                         } else {
-                            console.log(`${data.errmsg}\n`)
+                            console.log('飞书发送通知消息失败！！\n')
+                            console.log(`${data.msg}\n`)
                         }
                     }
                 } catch (e) {
