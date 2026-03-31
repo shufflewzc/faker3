@@ -1,5 +1,5 @@
 ## 仓库说明
-### 不破楼兰终不还
+### 锄禾日当午，汗滴禾下土
 
 Faker自用仓库。本地秘钥计算方法，保证账户信息安全。已适配Spy插件24小时全天监控。
 
@@ -13,9 +13,9 @@ Faker自用仓库。本地秘钥计算方法，保证账户信息安全。已适
 【一键脚本】
 https://thin-hill-428.notion.site/Faker-QL-pannel-Faker-Repository-environment-Setup-45edcbfe90d74d8abb2d71896eab3be7
 
-##  内部助力版
+##  日常签到版
 
-无任何自带助力码。
+日常签到，仅包含少量日常任务签到版本。安静挂机。
 
 #### [点击直达频道获得更多使用教程](https://t.me/scriptalking)
 
@@ -23,11 +23,11 @@ https://thin-hill-428.notion.site/Faker-QL-pannel-Faker-Repository-environment-S
 
 
 
-【注意】拉库前请打开青龙面板-配置文件 第18行 GithubProxyUrl="" 双引号中的内容去掉。
+【注意】拉库前请打开青龙面板-配置文件 GithubProxyUrl="" 双引号中的内容去掉。
 
-Faker3 内部助力版
+Faker4
 
-ql repo https://git.metauniverse-cn.com/https://github.com/shufflewzc/faker3.git "jd_|jx_|gua_|jddj_|jdCookie" "activity|backUp" "^jd[^_]|USER|function|utils|sendNotify|ZooFaker_Necklace.js|JDJRValidator_|sign_graphics_validate|ql|JDSignValidator|magic|depend|h5sts" "main"
+ql repo https://git.metauniverse-cn.com/https://github.com/shufflewzc/faker4.git "jd_|jx_|gua_|jddj_|jdCookie" "activity|backUp" "^jd[^_]|USER|function|utils|sendNotify|ZooFaker_Necklace.js|JDJRValidator_|sign_graphics_validate|ql|JDSignValidator|magic|depend|h5sts" "main"
 
 【教程合集】
 [https://www.notion.so/Cent-OS-7-6-1c598629675145988b43a37998a1604a]()
