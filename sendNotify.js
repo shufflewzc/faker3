@@ -117,6 +117,12 @@ let GOTIFY_URL = '';
 let GOTIFY_TOKEN = '';
 let GOTIFY_PRIORITY = 0;
 
+// =======================================飞书/Lark机器人通知设置区域======================================
+//larkKey 填写飞书群机器人 Webhook 地址末尾的 key，例如：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+//larkSecret 填写飞书群机器人签名密钥（可选，不填则不签名）
+let LARK_KEY = '';
+let LARK_SECRET = '';
+
 // =======================================BncrBot通知设置区域==============================================
 //BncrHost 填写BncrHost地址,如https://192.168.31.192:9090
 //BncrToken 填写Bncr的消息应用Token
@@ -667,6 +673,12 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
         if (process.env["GOTIFY_PRIORITY" + UseGroupNotify]) {
             GOTIFY_PRIORITY = process.env["GOTIFY_PRIORITY" + UseGroupNotify];
         }
+        if (process.env["LARK_KEY" + UseGroupNotify]) {
+            LARK_KEY = process.env["LARK_KEY" + UseGroupNotify];
+        }
+        if (process.env["LARK_SECRET" + UseGroupNotify]) {
+            LARK_SECRET = process.env["LARK_SECRET" + UseGroupNotify];
+        }
         if (process.env["BncrHost" + UseGroupNotify]) {
             BncrHost = process.env["BncrHost" + UseGroupNotify];
         }
@@ -846,7 +858,8 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
         gobotNotify(text, desp), //go-cqhttp
         gotifyNotify(text, desp), //gotify
         bncrNotify(text, desp), //bncr
-        wxpusherNotify(text, desp) // wxpusher
+        wxpusherNotify(text, desp), // wxpusher
+        larkNotify(text, desp) // 飞书/Lark
     ]);
 }
 
@@ -1180,6 +1193,64 @@ function gotifyNotify(text, desp) {
                             console.log('gotify发送通知消息成功🎉\n');
                         } else {
                             console.log(`${data.message}\n`);
+                        }
+                    }
+                } catch (e) {
+                    $.logErr(e, resp);
+                }
+                finally {
+                    resolve();
+                }
+            });
+        } else {
+            resolve();
+        }
+    });
+}
+
+function larkNotify(text, desp) {
+    return new Promise((resolve) => {
+        if (LARK_KEY) {
+            let larkUrl = LARK_KEY;
+            if (!larkUrl.startsWith('http')) {
+                larkUrl = `https://open.feishu.cn/open-apis/bot/v2/hook/${larkUrl}`;
+            }
+
+            const body = {
+                msg_type: 'text',
+                content: { text: `${text}\n\n${desp}` },
+            };
+
+            // 添加签名（如果配置了 larkSecret）
+            if (LARK_SECRET) {
+                const timestamp = Math.floor(Date.now() / 1000).toString();
+                const stringToSign = `${timestamp}\n${LARK_SECRET}`;
+                const crypto = require('crypto');
+                const hmac = crypto.createHmac('sha256', stringToSign);
+                const sign = hmac.digest('base64');
+                body.timestamp = timestamp;
+                body.sign = sign;
+            }
+
+            const options = {
+                url: larkUrl,
+                json: body,
+                headers: { 'Content-Type': 'application/json' },
+                timeout,
+            };
+            $.post(options, (err, resp, data) => {
+                try {
+                    if (err) {
+                        console.log('飞书/Lark发送通知调用API失败！！\n');
+                        console.log(err);
+                    } else {
+                        if (typeof data === 'string') {
+                            data = JSON.parse(data);
+                        }
+                        if (data.code === 0 || data.StatusCode === 0) {
+                            console.log('飞书/Lark发送通知消息成功🎉\n');
+                        } else {
+                            console.log(`飞书/Lark发送通知失败：${data.msg || data.message}\n`);
                         }
                     }
                 } catch (e) {
