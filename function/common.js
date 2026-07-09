@@ -9,6 +9,7 @@ let assert = require('assert');
 let jxAlgo = require("./jxAlgo");
 let config = require("./config");
 let user = {}
+let USER_AGENTS = require('../USER_AGENTS').USER_AGENTS || [];
 try {
     user = require("./user")
 } catch (e) {}
@@ -89,6 +90,8 @@ class env {
         }
         if (params.hasOwnProperty('ua') || params.hasOwnProperty('useragent')) {
             params.headers['user-agent'] = params.ua
+        } else if (!params.headers['user-agent'] && USER_AGENTS.length > 0) {
+            params.headers['user-agent'] = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
         }
         if (params.hasOwnProperty('referer')) {
             params.headers.referer = params.referer
